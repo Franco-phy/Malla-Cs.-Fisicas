@@ -127,7 +127,7 @@ function render(){
       chk.type = "checkbox"; chk.checked = s.regular || false; chk.disabled = !!locked;
       chk.onchange = () => {
         s.regular = chk.checked;
-        if(s.regular) alert("¡Buen trabajo!");
+        if(s.regular) showMessage("¡Bien hecho!");
         state[subj.name] = s; save(); render();
       };
 
@@ -143,7 +143,7 @@ function render(){
             const wasApproved = s.aprobada;
             s.aprobada = true; s.nota = v;
             if(!s.regular) s.regular = true;
-            if(!wasApproved) alert("¡Felicidades!");
+            if(!wasApproved) showMessage("¡Felicitaciones!");
             state[subj.name] = s; save(); render();
             const aprobadasActuales = Object.values(state).filter(x => x.aprobada).length;
             if (aprobadasActuales === total) doConfetti();
@@ -176,9 +176,27 @@ function render(){
   document.getElementById("materiasContador").textContent = `Materias aprobadas: ${approved} / ${total}`;
   document.getElementById("promedio").textContent = count ? (sum / count).toFixed(2) : "-";
 }
+function showMessage(msg) {
+  const box = document.getElementById("message-box");
+  const msgDiv = document.createElement("div");
+  msgDiv.textContent = msg;
+  msgDiv.style.background = "#2b5d84";
+  msgDiv.style.color = "#fff";
+  msgDiv.style.padding = "10px 15px";
+  msgDiv.style.marginTop = "10px";
+  msgDiv.style.borderRadius = "5px";
+  msgDiv.style.boxShadow = "0 2px 6px rgba(0,0,0,0.2)";
+  msgDiv.style.fontSize = "0.9rem";
+  msgDiv.style.opacity = "0";
+  msgDiv.style.transition = "opacity 0.3s ease";
+  box.appendChild(msgDiv);
+  setTimeout(() => { msgDiv.style.opacity = "1"; }, 10);
+  setTimeout(() => msgDiv.remove(), 3000);
+}
 
 function rename(oldn,newn){ if(newn && newn.trim()){ state[newn] = state[oldn]; delete state[oldn]; save(); render(); } }
 render();
 </script>
+  <div id="message-box" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999;"></div>
 </body>
 </html>
