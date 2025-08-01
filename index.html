@@ -1,343 +1,140 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Malla Curricular - Física UBA</title>
   <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      margin: 0;
-      padding: 0;
-      background: #f2f6f9;
-      color: #333;
-    }
-    header {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 20px;
-      background-color: #e1ecf4;
-      padding: 10px 20px;
-    }
-    header img {
-      height: 50px;
-      object-fit: contain;
-    }
-    header h1 {
-      font-size: 1.5rem;
-      text-align: center;
-      color: #2b5d84;
-    }
-    .controls {
-      text-align: center;
-      margin: 10px;
-    }
-    .controls button {
-      background-color: #e74c3c;
-      color: white;
-      border: none;
-      padding: 8px 12px;
-      font-size: 14px;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    .container {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      padding: 10px;
-    }
-    .year-column {
-      margin: 10px;
-      min-width: 220px;
-      flex: 1;
-    }
-    .year-column h2 {
-      text-align: center;
-      color: #2b5d84;
-    }
-    .subject {
-      background: #ffffff;
-      border: 1px solid #cbd5e0;
-      border-radius: 5px;
-      padding: 8px;
-      margin: 5px 0;
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      font-size: 0.9rem;
-    }
-    .subject.locked {
-      opacity: 0.5;
-      pointer-events: none;
-      cursor: not-allowed;
-    }
-    .subject:hover {
-      box-shadow: 0 0 5px #ccc;
-    }
-    .subject label {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-    .subject input[type="text"] {
-      width: 50px;
-      padding: 2px;
-      margin-top: 4px;
-      font-size: 0.8rem;
-    }
-    .regular {
-      background-color: #d0ecf9;
-    }
-    .approved {
-      background-color: #c9f4d2;
-    }
-    .tooltip {
-      position: absolute;
-      background: #333;
-      color: white;
-      padding: 4px 6px;
-      border-radius: 3px;
-      font-size: 0.75rem;
-      top: -5px;
-      right: 5px;
-      z-index: 10;
-      display: none;
-    }
-    .subject.locked:hover .tooltip {
-      display: block;
-    }
-    .stats {
-      text-align: center;
-      margin-top: 15px;
-      font-size: 0.9rem;
-    }
-    @keyframes fadeIn {
-      from {opacity: 0;}
-      to {opacity: 1;}
-    }
-    .message {
-      position: fixed;
-      top: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #2ecc71;
-      color: white;
-      padding: 10px 20px;
-      border-radius: 5px;
-      animation: fadeIn 0.6s ease-in-out;
-      z-index: 9999;
-    }
-    @media (max-width: 768px) {
-      .year-column {
-        min-width: 100%;
-      }
-      header h1 {
-        font-size: 1.2rem;
-      }
-    }
+    body { font-family: sans-serif; margin:0; padding:0; background:#f2f6f9; color:#333; }
+    header { display:flex; align-items:center; justify-content:space-between; background:#e1ecf4; padding:10px 20px; flex-wrap: wrap; }
+    header .left, header .right { display:flex; align-items:center; gap:10px; }
+    header img { height:50px; }
+    header h1 { flex:1; text-align:center; color:#2b5d84; font-size:1.4rem; margin:0; }
+    .progress-bar { width:150px; height:10px; background:#ddd; border-radius:5px; overflow:hidden; }
+    .progress-bar-inner { height:100%; width:0%; background:#2b5d84; transition: width .5s ease; }
+    .controls { text-align:center; margin:10px; }
+    .controls button { background:#e74c3c; color:#fff; border:none; padding:8px 12px; border-radius:5px; cursor:pointer; }
+    .container { display:flex; flex-wrap: wrap; justify-content:center; padding:10px; }
+    .year-column { margin:10px; min-width:220px; flex:1; }
+    .year-column h2 { text-align:center; color:#2b5d84; }
+    .subject { background:#fff; border:1px solid #cbd5e0; border-radius:5px; padding:8px; margin:5px 0; position:relative; display:flex; flex-direction:column; font-size:0.9rem; }
+    .subject.locked { opacity:0.5; pointer-events:none; cursor:not-allowed; }
+    .tooltip { position:absolute; background:#333; color:#fff; padding:4px 6px; border-radius:3px; font-size:0.75rem; top:-5px; right:5px; display:none; }
+    .subject.locked:hover .tooltip { display:block; }
+    input[type="text"] { width:50px; padding:2px; margin-top:4px; font-size:0.8rem; }
+    .regular { background:#d0ecf9; }
+    .approved { background:#c9f4d2; }
+    @media (max-width:768px){ header { flex-direction:column; align-items:stretch; } header .left, header .right { margin:5px 0; justify-content:center; } }
   </style>
 </head>
 <body>
   <header>
-    <img src="UBA_logo_University_of_Buenos_Aires.webp" alt="UBA" />
+    <div class="left">
+      <img src="UBA_logo_University_of_Buenos_Aires.webp" alt="UBA" />
+      <div>
+        <small>Materias aprobadas:</small><br>
+        <div class="progress-bar"><div class="progress-bar-inner" id="progBar"></div></div>
+      </div>
+    </div>
     <h1>Malla Curricular - Física UBA</h1>
-    <img src="logo-wide.webp" alt="Física" />
+    <div class="right">
+      <div>
+        <small>Promedio:</small><br>
+        <span id="promedio">‑</span>
+      </div>
+      <img src="logo-wide.webp" alt="Física" />
+    </div>
   </header>
   <div class="controls">
     <button onclick="resetProgress()">Reiniciar Progreso</button>
   </div>
   <div class="container" id="curriculum"></div>
-  <div class="stats" id="stats"></div>
-
   <script>
-    const data = {
-      "CBC": [
-        { name: "Química" },
-        { name: "Física" },
-        { name: "Análisis Matemático" },
-        { name: "Algebra" },
-        { name: "ICSE" },
-        { name: "IPC" }
-      ],
-      "1er Año": [
-        { name: "Física 1", req: ["CBC"] },
-        { name: "Física 2", req: ["Física 1:regular"] },
-        { name: "Matemática 1", req: ["CBC"] },
-        { name: "Matemática 2", req: ["CBC"] },
-        { name: "Matemática 3", req: ["Matemática 1:regular"] },
-        { name: "Laboratorio 1", req: ["CBC"] },
-        { name: "Laboratorio 2", req: ["Física 1:regular", "Laboratorio 1:regular"] }
-      ],
-      "2do Año": [
-        { name: "Calculo Numérico", req: ["Matemática 2:aprobada", "Matemática 1:regular"] },
-        { name: "Física 3", req: ["Física 1:regular", "Matemática 3:regular", "Matemática 1:aprobada"] },
-        { name: "Física 4", req: ["Física 1:aprobada", "Física 2:regular", "Física 3:regular"] },
-        { name: "Matemática 4", req: ["Matemática 1:aprobada", "Matemática 2:aprobada", "Matemática 3:regular"] },
-        { name: "Mecánica Clásica", req: ["Física 1:aprobada", "Matemática 2:aprobada", "Matemática 3:aprobada", "Física 3:regular"] },
-        { name: "Laboratorio 3", req: ["Laboratorio 1:aprobada", "Laboratorio 2:aprobada", "Física 2:regular", "Física 3:regular"] }
-      ],
-      "3er Año": [
-        { name: "Estructura 1", req: ["Física 3:aprobada", "Física 4:regular", "Matemática 4:regular", "Mecánica Clásica:regular"] },
-        { name: "Laboratorio 4", req: ["Física 2:aprobada", "Física 3:aprobada", "Laboratorio 3:aprobada", "Física 4:regular"] },
-        { name: "Laboratorio 5", req: ["Laboratorio 4:aprobada"] },
-        { name: "Teórica 1", req: ["Física 3:aprobada", "Física 4:regular", "Matemática 4:regular", "Mecánica Clásica:regular"] },
-        { name: "Teórica 2", req: ["Física 3:aprobada", "Física 4:regular", "Matemática 4:regular", "Mecánica Clásica:regular"] },
-        { name: "Teórica 3", req: ["Física 3:aprobada", "Física 4:regular", "Mecánica Clásica:regular"] }
-      ],
-      "4to Año": [
-        { name: "Estructura 2", req: ["Teórica 2:regular", "Teórica 3:regular"] },
-        { name: "Estructura 3", req: ["Teórica 2:regular", "Teórica 3:regular"] },
-        { name: "Estructura 4", req: ["Teórica 2:regular"] },
-        { name: "Laboratorio 6", req: ["Laboratorio 5:aprobada"] },
-        { name: "Laboratorio 7", req: ["Laboratorio 6:aprobada"] },
-        { name: "Optativa 1", editable: true }
-      ],
-      "5to Año": [
-        { name: "Optativa 2", editable: true },
-        { name: "Optativa 3", editable: true },
-        { name: "Tesis de Licenciatura", req: ["ALL:regular"] }
-      ]
-    };
-
-    let state = JSON.parse(localStorage.getItem("malla_fisica")) || {};
-
-    function save() {
-      localStorage.setItem("malla_fisica", JSON.stringify(state));
-    }
-
-    function resetProgress() {
-      if (confirm("¿Seguro que deseas reiniciar todo el progreso?")) {
-        localStorage.removeItem("malla_fisica");
-        location.reload();
+    /* confetti simple */
+    function doConfetti(){
+      const canvas=document.createElement('canvas');
+      canvas.style.position='fixed'; canvas.style.top=0; canvas.style.left=0;
+      canvas.width=window.innerWidth; canvas.height=window.innerHeight;
+      document.body.appendChild(canvas);
+      const ctx=canvas.getContext('2d'), pieces=[];
+      for(let i=0;i<150;i++){ pieces.push({x:Math.random()*canvas.width, y:Math.random()*canvas.height, r:Math.random()*6+4, dx:(Math.random()-0.5)*4, dy:Math.random()*-7-3, color:`hsl(${Math.random()*360},70%,60%)`}); }
+      function draw(){
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        pieces.forEach(p=>{
+          p.x+=p.dx; p.y+=p.dy; p.dy+=0.3;
+          ctx.fillStyle=p.color; ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,2*Math.PI); ctx.fill();
+        });
+        pieces.forEach((p,i)=>{ if(p.y>canvas.height){ pieces.splice(i,1); } });
+        if(pieces.length) requestAnimationFrame(draw); else canvas.remove();
       }
+      draw();
     }
-
-    function showMessage(msg, color = "#2ecc71") {
-      const el = document.createElement("div");
-      el.className = "message";
-      el.style.background = color;
-      el.textContent = msg;
-      document.body.appendChild(el);
-      setTimeout(() => el.remove(), 3000);
-    }
-
-    function render() {
-      const container = document.getElementById("curriculum");
-      container.innerHTML = "";
-      let total = 0, approved = 0, sum = 0, count = 0;
-      const allStatuses = {};
-
-      for (let year in data) {
-        const column = document.createElement("div");
-        column.className = "year-column";
-        column.innerHTML = `<h2>${year}</h2>`;
-
-        for (let subj of data[year]) {
-          total++;
-          const id = subj.name;
-          let subjState = state[id] || {};
-          allStatuses[id] = subjState;
-
-          const div = document.createElement("div");
-          div.className = "subject";
-          div.title = id;
-
-          const locked = isLocked(subj, allStatuses);
-          if (locked) {
-            div.classList.add("locked");
-            const tooltip = document.createElement("div");
-            tooltip.className = "tooltip";
-            tooltip.textContent = "Requiere: " + locked.join(", ");
-            div.appendChild(tooltip);
-          }
-
-          if (subjState.regular) div.classList.add("regular");
-          if (subjState.aprobada) div.classList.add("approved");
-
-          const label = document.createElement("label");
-          const chk = document.createElement("input");
-          chk.type = "checkbox";
-          chk.checked = subjState.regular || false;
-          chk.disabled = locked;
-          chk.onchange = () => {
-            subjState.regular = chk.checked;
-            state[id] = subjState;
-            if (chk.checked) showMessage("¡Buen Trabajo!");
-            save(); render();
-          };
-          label.appendChild(chk);
-          label.append(" Regular");
-
-          div.innerHTML = `<strong>${subj.editable ? `<input value="${id}" onchange="renameSubject('${id}', this.value)">` : id}</strong>`;
-          div.appendChild(label);
-
-          const nota = document.createElement("input");
-          nota.type = "text";
-          nota.placeholder = "Nota";
-          nota.value = subjState.nota || "";
-          nota.disabled = locked;
-          nota.oninput = () => {
-            const val = parseFloat(nota.value);
-            if (!isNaN(val) && val >= 4) {
-              subjState.aprobada = true;
-              subjState.nota = val;
-              if (!subjState.regular) subjState.regular = true;
-              showMessage("¡Felicitaciones!", "#27ae60");
-            } else {
-              subjState.aprobada = false;
-            }
-            state[id] = subjState;
-            save(); render();
-          };
-          div.appendChild(nota);
-
-          column.appendChild(div);
-
-          if (subjState.aprobada) {
-            approved++;
-            if (!["CBC"].includes(year)) {
-              sum += parseFloat(subjState.nota);
-              count++;
-            }
-          }
-        }
-
-        container.appendChild(column);
-      }
-
-      document.getElementById("stats").innerHTML =
-        `Materias aprobadas: ${approved} / ${total} <br> Promedio (sin CBC): ${count ? (sum / count).toFixed(2) : "-"}`;
-    }
-
-    function renameSubject(oldName, newName) {
-      if (!newName || newName.trim() === "") return;
-      state[newName] = state[oldName];
-      delete state[oldName];
-      save();
-      render();
-    }
-
-    function isLocked(subj, allStatuses) {
-      if (!subj.req) return false;
-      const unmet = [];
-      for (let req of subj.req) {
-        if (req === "CBC") {
-          const cbcOk = Object.keys(allStatuses).filter(k => k in data["CBC"]).every(k => allStatuses[k]?.regular);
-          if (!cbcOk) unmet.push("CBC completo");
-        } else if (req === "ALL:regular") {
-          const allRegular = Object.keys(allStatuses).every(k => allStatuses[k]?.regular);
-          if (!allRegular) unmet.push("Todo regularizado");
+    const data={ /* igual que antes */ "CBC":[{name:"Química"},{name:"Física"},{name:"Análisis Matemático"},{name:"Algebra"},{name:"ICSE"},{name:"IPC"}], /*... resto ciclos igual ...*/ "1er Año":[{name:"Física 1",req:["CBC"]},{name:"Física 2",req:["Física 1:regular"]},{name:"Matemática 1",req:["CBC"]},{name:"Matemática 2",req:["CBC"]},{name:"Matemática 3",req:["Matemática 1:regular"]},{name:"Laboratorio 1",req:["CBC"]},{name:"Laboratorio 2",req:["Física 1:regular","Laboratorio 1:regular"]}], "2do Año":[{name:"Calculo Numérico",req:["Matemática 2:aprobada","Matemática 1:regular"]},{name:"Física 3",req:["Física 1:regular","Matemática 3:regular","Matemática 1:aprobada"]},{name:"Física 4",req:["Física 1:aprobada","Física 2:regular","Física 3:regular"]},{name:"Matemática 4",req:["Matemática 1:aprobada","Matemática 2:aprobada","Matemática 3:regular"]},{name:"Mecánica Clásica",req:["Física 1:aprobada","Matemática 2:aprobada","Matemática 3:aprobada","Física 3:regular"]},{name:"Laboratorio 3",req:["Laboratorio 1:aprobada","Laboratorio 2:aprobada","Física 2:regular","Física 3:regular"]}], "3er Año":[{name:"Estructura 1",req:["Física 3:aprobada","Física 4:regular","Matemática 4:regular","Mecánica Clásica:regular"]},{name:"Laboratorio 4",req:["Física 2:aprobada","Física 3:aprobada","Laboratorio 3:aprobada","Física 4:regular"]},{name:"Laboratorio 5",req:["Laboratorio 4:aprobada"]},{name:"Teórica 1",req:["Física 3:aprobada","Física 4:regular","Matemática 4:regular","Mecánica Clásica:regular"]},{name:"Teórica 2",req:["Física 3:aprobada","Física 4:regular","Matemática 4:regular","Mecánica Clásica:regular"]},{name:"Teórica 3",req:["Física 3:aprobada","Física 4:regular","Mecánica Clásica:regular"]}], "4to Año":[{name:"Estructura 2",req:["Teórica 2:regular","Teórica 3:regular"]},{name:"Estructura 3",req:["Teórica 2:regular","Teórica 3:regular"]},{name:"Estructura 4",req:["Teórica 2:regular"]},{name:"Laboratorio 6",req:["Laboratorio 5:aprobada"]},{name:"Laboratorio 7",req:["Laboratorio 6:aprobada"]},{name:"Optativa 1",editable:true}], "5to Año":[{name:"Optativa 2",editable:true},{name:"Optativa 3",editable:true},{name:"Tesis de Licenciatura",req:["ALL:regular"]}]};
+    let state=JSON.parse(localStorage.getItem("malla_fisica"))||{};
+    function save(){ localStorage.setItem("malla_fisica",JSON.stringify(state)); }
+    function resetProgress(){ if(confirm("¿Reiniciar progreso?")){ localStorage.removeItem("malla_fisica"); location.reload(); } }
+    function lockCheck(subj, statuses){
+      if(!subj.req) return false;
+      let unmet=[];
+      subj.req.forEach(r=>{
+        if(r==="CBC"){
+          const ok=data["CBC"].every(s=>statuses[s.name]?.regular);
+          if(!ok) unmet.push("CBC completo");
+        } else if(r==="ALL:regular"){
+          if(!Object.values(statuses).every(s=>s.regular)) unmet.push("Todo regularizado");
         } else {
-          const [rname, type = "regular"] = req.split(":");
-          const stat = allStatuses[rname];
-          if (!stat || !stat[type]) unmet.push(`${rname} (${type})`);
+          let [n,t="regular"]=r.split(":");
+          const s=statuses[n];
+          if(!s || !s[t]) unmet.push(`${n} (${t})`);
         }
-      }
-      return unmet.length ? unmet : false;
+      });
+      return unmet.length?unmet:false;
     }
-
+    function render(){
+      const cont=document.getElementById("curriculum");
+      cont.innerHTML="";
+      let total=0, approved=0, sum=0, count=0;
+      const statuses={};
+      for(let year in data){
+        data[year].forEach(s=>statuses[s.name]=state[s.name]||{});
+      }
+      for(let year in data){
+        const col=document.createElement("div"); col.className="year-column";
+        col.innerHTML=`<h2>${year}</h2>`;
+        data[year].forEach(subj=>{
+          total++;
+          const div=document.createElement("div"); div.className="subject";
+          const s=state[subj.name]||{};
+          const locked=lockCheck(subj,statuses);
+          if(locked){ div.classList.add("locked"); const tt=document.createElement("div"); tt.className="tooltip"; tt.textContent="Requiere: "+locked.join(", "); div.appendChild(tt); }
+          if(s.regular) div.classList.add("regular");
+          if(s.aprobada) div.classList.add("approved");
+          const chk=document.createElement("input"); chk.type="checkbox"; chk.checked=s.regular||false; chk.disabled=!!locked;
+          chk.onchange=()=>{
+            s.regular=chk.checked; state[subj.name]=s;
+            if(chk.checked) showMessage("¡Buen Trabajo!","#3498db"); save(); render();
+          };
+          const label=document.createElement("label"); label.append(chk,document.createTextNode(" Regular"));
+          const nota=document.createElement("input"); nota.type="text"; nota.placeholder="Nota"; nota.value=s.nota||""; nota.disabled=!!locked;
+          nota.oninput=()=>{
+            let v=parseFloat(nota.value);
+            if(!isNaN(v)&&v>=4){ s.aprobada=true; s.nota=v; if(!s.regular) s.regular=true; showMessage("¡Felicitaciones!", "#27ae60"); }
+            else{ s.aprobada=false; s.nota=nota.value; }
+            state[subj.name]=s; save(); render();
+          };
+          div.innerHTML=`<strong>${subj.editable? `<input value="${subj.name}" onchange="rename('${subj.name}', this.value)">`: subj.name}</strong>`;
+          div.append(label, nota);
+          col.appendChild(div);
+          if(s.aprobada){
+            approved++; if(year!=="CBC"){ sum+=parseFloat(s.nota)||0; count++; }
+          }
+        });
+        cont.appendChild(col);
+      }
+      document.getElementById("progBar").style.width=`${(approved/total*100)||0}%`;
+      document.getElementById("promedio").textContent=count? (sum/count).toFixed(2): "-";
+    }
+    function rename(oldn,newn){ if(newn&&newn.trim()){ state[newn]=state[oldn]; delete state[oldn]; save(); render(); } }
+    function showMessage(msg,color="#2ecc71"){ doConfetti(); const el=document.createElement("div"); el.className="message"; el.style.background=color; el.textContent=msg; document.body.appendChild(el); setTimeout(()=>el.remove(),3000); }
     render();
   </script>
 </body>
