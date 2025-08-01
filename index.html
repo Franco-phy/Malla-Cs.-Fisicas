@@ -2,219 +2,221 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Malla Curricular Física - UBA</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Malla Cs. Físicas - UBA</title>
   <style>
-    :root {
-      --aprobada: #6FCF97;
-      --regular: #F2C94C;
-      --pendiente: #E0E0E0;
-      --bloqueada: #BDBDBD;
-      --fondo: #f7f9fa;
-      --texto: #333;
-    }
-    body.dark {
-      --fondo: #1e1e1e;
-      --texto: #eee;
-      --aprobada: #27ae60;
-      --regular: #f39c12;
-      --pendiente: #555;
-      --bloqueada: #333;
-    }
     body {
+      font-family: Arial, sans-serif;
+      background-color: #f5f5f5;
       margin: 0;
-      font-family: sans-serif;
-      background: var(--fondo);
-      color: var(--texto);
+      padding: 0;
+      color: #333;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    .dark-mode {
+      background-color: #1e1e1e;
+      color: #ddd;
     }
     header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: #2980b9;
+      background: #333;
       color: white;
-      padding: 10px 20px;
+      padding: 1rem;
+      text-align: center;
     }
-    .malla {
+    .dark-mode header {
+      background: #111;
+    }
+    .controls {
       display: flex;
       flex-wrap: wrap;
-      gap: 20px;
       justify-content: center;
-      padding: 20px;
+      gap: 10px;
+      margin: 1rem;
     }
-    .anio {
-      min-width: 200px;
+    button, input[type="text"] {
+      padding: 0.5rem 1rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 1rem;
     }
-    .anio h2 {
-      text-align: center;
+    .dark-mode button, .dark-mode input[type="text"] {
+      background: #333;
+      color: white;
+      border-color: #555;
+    }
+    #malla {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      padding: 1rem;
     }
     .materia {
-      background: white;
-      padding: 8px;
-      margin: 5px;
-      border-radius: 5px;
-      cursor: pointer;
+      background: #fff;
+      padding: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      width: 180px;
       text-align: center;
-      transition: background 0.3s;
-    }
-    .materia.bloqueada {
-      background: var(--bloqueada);
-      cursor: not-allowed;
-    }
-    .materia.pendiente {
-      background: var(--pendiente);
+      cursor: pointer;
+      position: relative;
     }
     .materia.regular {
-      background: var(--regular);
+      background-color: #ffe082;
     }
     .materia.aprobada {
-      background: var(--aprobada);
+      background-color: #81c784;
     }
-    .notas-input {
+    .materia.bloqueada {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .nota-input {
+      width: 50px;
       margin-top: 5px;
     }
-    .controles {
-      margin: 10px 20px;
-      display: flex;
-      gap: 10px;
-      align-items: center;
+    .tooltip {
+      position: absolute;
+      bottom: -1.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #333;
+      color: white;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      display: none;
     }
-    .stats {
-      font-weight: bold;
+    .materia:hover .tooltip {
+      display: block;
+    }
+    .estadisticas {
+      text-align: center;
+      margin-bottom: 1rem;
     }
   </style>
 </head>
 <body>
   <header>
-    <h1>Malla Física UBA</h1>
-    <div>
-      <button onclick="toggleDarkMode()">🌓</button>
-      <button onclick="resetMalla()">Reiniciar</button>
-    </div>
+    <h1>Malla de Ciencias Físicas - UBA</h1>
   </header>
-
-  <div class="controles">
-    <input type="text" id="buscador" placeholder="Buscar materia...">
+  <div class="controls">
+    <input type="text" id="busqueda" placeholder="Buscar materia..." />
     <button onclick="buscarMateria()">Buscar</button>
-    <span class="stats" id="estadisticas"></span>
+    <button onclick="resetMalla()">Reiniciar</button>
+    <button onclick="alternarTema()">Modo claro/oscuro</button>
   </div>
-
-  <main class="malla" id="malla"></main>
+  <div class="estadisticas" id="estadisticas"></div>
+  <div id="malla"></div>
 
   <script>
     const materias = [
-      { nombre: "Análisis Matemático I", anio: 1 },
-      { nombre: "Álgebra I", anio: 1 },
-      { nombre: "Física I", anio: 1 },
-      { nombre: "Análisis Matemático II", anio: 2 },
-      { nombre: "Física II", anio: 2 },
-      { nombre: "Álgebra II", anio: 2 },
-      { nombre: "Física III", anio: 3 },
-      { nombre: "Matemática III", anio: 3 },
-      { nombre: "Laboratorio I", anio: 3 },
-      { nombre: "Matemática IV", anio: 4 },
-      { nombre: "Física IV", anio: 4 },
-      { nombre: "Laboratorio II", anio: 4 },
-      { nombre: "Laboratorio III", anio: 5 },
-      { nombre: "Materia Optativa I", anio: 5, optativa: true },
-      { nombre: "Materia Optativa II", anio: 5, optativa: true },
+      { nombre: "Análisis Matemático I", codigo: "AM1", tipo: "obligatoria", correlativas: [] },
+      { nombre: "Álgebra y Geometría Analítica", codigo: "AGA", tipo: "obligatoria", correlativas: [] },
+      { nombre: "Física I", codigo: "F1", tipo: "obligatoria", correlativas: ["AM1"] },
+      { nombre: "Física II", codigo: "F2", tipo: "obligatoria", correlativas: ["F1"] },
+      { nombre: "Materia Optativa 1", codigo: "OPT1", tipo: "optativa", correlativas: [] },
     ];
 
-    let estado = JSON.parse(localStorage.getItem("estadoMalla")) || {};
-    let modoOscuro = localStorage.getItem("modoOscuro") === "true";
+    const estado = JSON.parse(localStorage.getItem("estadoMalla") || '{}');
 
-    function render() {
-      document.body.classList.toggle("dark", modoOscuro);
-      const cont = document.getElementById("malla");
-      cont.innerHTML = "";
+    function guardarEstado() {
+      localStorage.setItem("estadoMalla", JSON.stringify(estado));
+    }
 
-      for (let anio = 1; anio <= 5; anio++) {
-        const col = document.createElement("div");
-        col.className = "anio";
-        col.innerHTML = `<h2>${anio}° Año</h2>`;
-        materias.filter(m => m.anio === anio).forEach(mat => {
-          const div = document.createElement("div");
-          div.className = `materia ${estado[mat.nombre]?.estado || "pendiente"}`;
-          div.innerHTML = `<div>${mat.nombre}</div>`;
-          if (mat.optativa) div.contentEditable = true;
-          div.onclick = () => cambiarEstado(mat.nombre);
+    function crearMalla() {
+      const contenedor = document.getElementById("malla");
+      contenedor.innerHTML = "";
+      materias.forEach(m => {
+        const div = document.createElement("div");
+        div.className = "materia";
+        div.id = m.codigo;
+        if (!m.correlativas.every(c => estado[c]?.estado === 'aprobada')) {
+          div.classList.add("bloqueada");
+        }
+        if (estado[m.codigo]?.estado === 'regular') {
+          div.classList.add("regular");
+        } else if (estado[m.codigo]?.estado === 'aprobada') {
+          div.classList.add("aprobada");
+        }
 
-          if (estado[mat.nombre]?.estado === "aprobada") {
-            div.innerHTML += `<div class='notas-input'>Nota: ${estado[mat.nombre].nota}</div>`;
-          }
+        div.innerHTML = `
+          <strong>${m.nombre}</strong>
+          <div class="tooltip">${m.codigo}</div>
+        `;
 
-          col.appendChild(div);
-        });
-        cont.appendChild(col);
-      }
+        if (m.tipo === "optativa") {
+          div.contentEditable = true;
+        }
 
+        div.onclick = () => manejarClickMateria(m);
+
+        contenedor.appendChild(div);
+      });
       actualizarEstadisticas();
     }
 
-    function cambiarEstado(nombre) {
-      if (!estado[nombre]) estado[nombre] = { estado: "pendiente" };
-      const actual = estado[nombre].estado;
-      if (actual === "pendiente") {
-        estado[nombre].estado = "regular";
-        alert("Bien hecho, materia regularizada.");
-      } else if (actual === "regular") {
-        const nota = prompt("Ingrese nota (1-10):");
+    function manejarClickMateria(materia) {
+      if (!materia.correlativas.every(c => estado[c]?.estado === 'aprobada')) return;
+      if (!estado[materia.codigo]) estado[materia.codigo] = { estado: 'regular' };
+      else if (estado[materia.codigo].estado === 'regular') {
+        const nota = prompt("Ingresá la nota (1-10):");
         const n = parseInt(nota);
         if (!isNaN(n) && n >= 1 && n <= 10) {
-          estado[nombre].estado = "aprobada";
-          estado[nombre].nota = n;
-          alert("¡Felicitaciones, materia aprobada!");
+          estado[materia.codigo] = { estado: 'aprobada', nota: n };
+          alert("¡Felicitaciones!");
         } else {
-          alert("Nota inválida.");
+          alert("Nota inválida. Ingresá un número del 1 al 10.");
+          return;
         }
       } else {
-        estado[nombre] = { estado: "pendiente" };
+        delete estado[materia.codigo];
       }
-      guardar();
-    }
-
-    function guardar() {
-      localStorage.setItem("estadoMalla", JSON.stringify(estado));
-      render();
-    }
-
-    function toggleDarkMode() {
-      modoOscuro = !modoOscuro;
-      localStorage.setItem("modoOscuro", modoOscuro);
-      render();
-    }
-
-    function resetMalla() {
-      if (confirm("¿Seguro que querés reiniciar todo?")) {
-        if (confirm("¿Estás realmente seguro?")) {
-          localStorage.removeItem("estadoMalla");
-          estado = {};
-          render();
-        }
-      }
+      if (estado[materia.codigo]?.estado === 'regular') alert("¡Bien hecho!");
+      guardarEstado();
+      crearMalla();
     }
 
     function buscarMateria() {
-      const texto = document.getElementById("buscador").value.toLowerCase();
-      const divs = document.querySelectorAll(".materia");
-      divs.forEach(div => {
-        const nombre = div.innerText.toLowerCase();
-        div.style.border = nombre.includes(texto) ? "2px solid red" : "none";
-      });
+      const q = document.getElementById("busqueda").value.toLowerCase().trim();
+      if (!q) return;
+      const mat = materias.find(m => m.nombre.toLowerCase().includes(q));
+      if (mat) {
+        document.getElementById(mat.codigo)?.scrollIntoView({ behavior: "smooth" });
+      } else {
+        alert("Materia no encontrada");
+      }
+    }
+
+    function resetMalla() {
+      const conf = confirm("¿Seguro que querés reiniciar la malla?");
+      if (!conf) return;
+      const conf2 = confirm("Esta acción eliminará todo tu progreso. ¿Confirmás?");
+      if (!conf2) return;
+      localStorage.removeItem("estadoMalla");
+      location.reload();
     }
 
     function actualizarEstadisticas() {
-      let aprob = 0, reg = 0, pend = 0;
-      materias.forEach(m => {
-        const est = estado[m.nombre]?.estado || "pendiente";
-        if (est === "aprobada") aprob++;
-        else if (est === "regular") reg++;
-        else pend++;
-      });
-      document.getElementById("estadisticas").textContent = `Aprobadas: ${aprob} | Regulares: ${reg} | Pendientes: ${pend}`;
+      const total = materias.length;
+      const regulares = Object.values(estado).filter(m => m.estado === 'regular').length;
+      const aprobadas = Object.values(estado).filter(m => m.estado === 'aprobada').length;
+      document.getElementById("estadisticas").innerText = `Regulares: ${regulares} | Aprobadas: ${aprobadas} | Total: ${total}`;
     }
 
-    render();
+    function alternarTema() {
+      document.body.classList.toggle("dark-mode");
+      localStorage.setItem("modoOscuro", document.body.classList.contains("dark-mode"));
+    }
+
+    function cargarTema() {
+      if (localStorage.getItem("modoOscuro") === "true") {
+        document.body.classList.add("dark-mode");
+      }
+    }
+
+    cargarTema();
+    crearMalla();
   </script>
 </body>
 </html>
