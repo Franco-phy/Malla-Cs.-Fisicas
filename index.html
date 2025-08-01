@@ -1,161 +1,334 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <title>Malla Curricular Física UBA</title>
+  <meta charset="UTF-8">
+  <title>Malla Curricular - Física UBA</title>
   <style>
     body {
       font-family: sans-serif;
-      background: #f0f4f8;
+      background: #f4f8fc;
       color: #333;
       margin: 0;
-      padding: 1rem;
+      padding: 1em;
     }
+
     h1 {
       text-align: center;
+      margin-bottom: 0.2em;
     }
+
     .container {
-      display: grid;
-      grid-template-columns: repeat(6, 1fr);
-      gap: 1rem;
-      margin-top: 2rem;
+      display: flex;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      gap: 1em;
+      justify-content: center;
     }
-    .year {
-      background: #ffffff;
+
+    .column {
+      flex: 0 0 auto;
+      min-width: 220px;
+      padding: 0.5em;
+      background: #e6eff9;
+      border-radius: 12px;
+    }
+
+    .column h2 {
+      text-align: center;
+      font-size: 1.1em;
+    }
+
+    .materia {
+      background: #fff;
+      padding: 0.6em;
+      margin: 0.5em 0;
       border-radius: 10px;
-      padding: 1rem;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      position: relative;
+      transition: background 0.3s;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
     }
-    .year h2 {
-      font-size: 1rem;
-      margin-bottom: 1rem;
-      color: #4a90e2;
-    }
-    .subject {
-      background: #e0e6ed;
-      padding: 0.5rem;
-      margin-bottom: 0.5rem;
-      border-radius: 5px;
+
+    .materia.regular { background: #cce7ff; }
+    .materia.aprobada { background: #d2f5d0; }
+
+    .materia.bloqueada {
+      opacity: 0.6;
+      pointer-events: none;
       position: relative;
     }
-    .subject.blocked {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-    .subject.regular {
-      background-color: #d0e9f7;
-    }
-    .subject.approved {
-      background-color: #b7eac7;
-    }
-    .tooltip {
+
+    .materia.bloqueada::after {
+      content: attr(data-tooltip);
       position: absolute;
-      top: 0;
-      left: 100%;
-      margin-left: 10px;
-      background: #444;
-      color: white;
-      padding: 5px;
-      font-size: 0.8rem;
-      border-radius: 4px;
-      display: none;
-      white-space: nowrap;
-    }
-    .subject.blocked:hover .tooltip {
-      display: block;
-    }
-    .status-controls {
-      margin-top: 0.3rem;
-    }
-    .status-controls button {
-      font-size: 0.7rem;
-      margin-right: 0.3rem;
-    }
-    .note-input {
-      width: 100%;
-      margin-top: 0.2rem;
-      font-size: 0.8rem;
-    }
-    .message {
-      position: fixed;
-      top: 20px;
+      bottom: 100%;
       left: 50%;
       transform: translateX(-50%);
-      background-color: #4a90e2;
-      color: white;
-      padding: 10px 20px;
+      background: #444;
+      color: #fff;
+      padding: 0.3em 0.6em;
       border-radius: 5px;
+      font-size: 0.8em;
+      white-space: pre-wrap;
       display: none;
-      animation: fadeOut 3s forwards;
     }
-    @keyframes fadeOut {
-      0% { opacity: 1; }
-      80% { opacity: 1; }
-      100% { opacity: 0; display: none; }
+
+    .materia.bloqueada:hover::after {
+      display: block;
     }
-    .footer {
+
+    .controles {
+      display: flex;
+      align-items: center;
+      gap: 0.4em;
+      margin-top: 0.5em;
+    }
+
+    input[type="text"] {
+      width: 2em;
+      padding: 2px;
+      border: 1px solid #aaa;
+      border-radius: 5px;
+      font-size: 0.9em;
       text-align: center;
-      margin-top: 2rem;
-      font-size: 0.9rem;
     }
-    .opt-input {
-      width: 100%;
-      margin-top: 0.2rem;
+
+    .stats {
+      text-align: center;
+      margin-top: 1em;
+      font-size: 1.1em;
+    }
+
+    .mensaje {
+      position: fixed;
+      top: 30%;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 1em 2em;
+      background: #333;
+      color: white;
+      border-radius: 10px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s ease;
+      font-size: 1.2em;
+      z-index: 1000;
+    }
+
+    .mensaje.show {
+      opacity: 0.9;
+    }
+
+    .editable {
+      cursor: pointer;
+      font-weight: bold;
+      color: #004080;
     }
   </style>
 </head>
 <body>
   <h1>Malla Curricular - Física UBA</h1>
-  <div class="container" id="curriculum"></div>
-  <div class="footer">
-    <p id="stats"></p>
-  </div>
-  <div class="message" id="message"></div>
+  <div class="container" id="malla"></div>
+  <div class="stats" id="stats"></div>
+  <div class="mensaje" id="mensaje"></div>
 
   <script>
     const data = {
       "CBC": [
-        "Química", "Física", "Análisis Matemático", "Álgebra", "ICSE", "IPC"
+        "Química",
+        "Física",
+        "Análisis Matemático",
+        "Algebra",
+        "ICSE",
+        "IPC"
       ],
       "1er Año": [
-        { name: "Física 1", requires: ["CBC"] },
-        { name: "Física 2", requires: ["Física 1:regular"] },
-        { name: "Matemática 1", requires: ["CBC"], promo: true },
-        { name: "Matemática 2", requires: ["CBC"] },
-        { name: "Matemática 3", requires: ["Matemática 1:regular"] },
-        { name: "Laboratorio 1", requires: ["CBC"] },
-        { name: "Laboratorio 2", requires: ["Física 1:regular", "Laboratorio 1:regular"] }
+        { nombre: "Física 1", req: ["CBC"] },
+        { nombre: "Física 2", req: ["Física 1:regular"] },
+        { nombre: "Matemática 1", req: ["CBC"], promocionable: true },
+        { nombre: "Matemática 2", req: ["CBC"] },
+        { nombre: "Matemática 3", req: ["Matemática 1:regular"] },
+        { nombre: "Laboratorio 1", req: ["CBC"] },
+        { nombre: "Laboratorio 2", req: ["Física 1:regular", "Laboratorio 1:regular"] }
       ],
       "2do Año": [
-        { name: "Calculo Numérico", requires: ["Matemática 2:aprobada", "Matemática 1:regular"] },
-        { name: "Física 3", requires: ["Física 1:regular", "Matemática 3:regular", "Matemática 1:aprobada"] },
-        { name: "Física 4", requires: ["Física 1:aprobada", "Física 2:regular", "Física 3:regular"] },
-        { name: "Matemática 4", requires: ["Matemática 1:aprobada", "Matemática 2:aprobada", "Matemática 3:regular"] },
-        { name: "Mecánica Clásica", requires: ["Física 1:aprobada", "Matemática 2:aprobada", "Matemática 3:aprobada", "Física 3:regular"] },
-        { name: "Laboratorio 3", requires: ["Laboratorio 1:aprobada", "Laboratorio 2:aprobada", "Física 2:regular", "Física 3:regular"] }
+        { nombre: "Calculo Numérico", req: ["Matemática 2:aprobada", "Matemática 1:regular"] },
+        { nombre: "Física 3", req: ["Física 1:regular", "Matemática 3:regular", "Matemática 1:aprobada"] },
+        { nombre: "Física 4", req: ["Física 1:aprobada", "Física 2:regular", "Física 3:regular"] },
+        { nombre: "Matemática 4", req: ["Matemática 1:aprobada", "Matemática 2:aprobada", "Matemática 3:regular"] },
+        { nombre: "Mecánica Clásica", req: ["Física 1:aprobada", "Matemática 2:aprobada", "Matemática 3:aprobada", "Física 3:regular"] },
+        { nombre: "Laboratorio 3", req: ["Laboratorio 1:aprobada", "Laboratorio 2:aprobada", "Física 2:regular", "Física 3:regular"] }
       ],
       "3er Año": [
-        { name: "Estructura 1", requires: ["Física 3:aprobada", "Física 4:regular", "Matemática 4:regular", "Mecánica Clásica:regular"] },
-        { name: "Laboratorio 4", requires: ["Física 2:aprobada", "Física 3:aprobada", "Laboratorio 3:aprobada", "Física 4:regular"] },
-        { name: "Laboratorio 5", requires: ["Laboratorio 4:aprobada"] },
-        { name: "Teórica 1", requires: ["Física 3:aprobada", "Física 4:regular", "Matemática 4:regular", "Mecánica Clásica:regular"] },
-        { name: "Teórica 2", requires: ["Física 3:aprobada", "Física 4:regular", "Matemática 4:regular", "Mecánica Clásica:regular"] },
-        { name: "Teórica 3", requires: ["Física 3:aprobada", "Física 4:regular", "Mecánica Clásica:regular"] }
+        { nombre: "Estructura 1", req: ["Física 3:aprobada", "Física 4:regular", "Matemática 4:regular", "Mecánica Clásica:regular"] },
+        { nombre: "Laboratorio 4", req: ["Física 2:aprobada", "Física 3:aprobada", "Laboratorio 3:aprobada", "Física 4:regular"] },
+        { nombre: "Laboratorio 5", req: ["Laboratorio 4:aprobada"] },
+        { nombre: "Teórica 1", req: ["Física 3:aprobada", "Física 4:regular", "Matemática 4:regular", "Mecánica Clásica:regular"] },
+        { nombre: "Teórica 2", req: ["Física 3:aprobada", "Física 4:regular", "Matemática 4:regular", "Mecánica Clásica:regular"] },
+        { nombre: "Teórica 3", req: ["Física 3:aprobada", "Física 4:regular", "Mecánica Clásica:regular"] }
       ],
       "4to Año": [
-        { name: "Estructura 2", requires: ["Teórica 2:regular", "Teórica 3:regular"] },
-        { name: "Estructura 3", requires: ["Teórica 2:regular", "Teórica 3:regular"] },
-        { name: "Estructura 4", requires: ["Teórica 2:regular"] },
-        { name: "Laboratorio 6", requires: ["Laboratorio 5:aprobada"] },
-        { name: "Laboratorio 7", requires: ["Laboratorio 6:aprobada"] },
-        { name: "Optativa 1", optativa: true }
+        { nombre: "Estructura 2", req: ["Teórica 2:regular", "Teórica 3:regular"] },
+        { nombre: "Estructura 3", req: ["Teórica 2:regular", "Teórica 3:regular"] },
+        { nombre: "Estructura 4", req: ["Teórica 2:regular"] },
+        { nombre: "Laboratorio 6", req: ["Laboratorio 5:aprobada"] },
+        { nombre: "Laboratorio 7", req: ["Laboratorio 6:aprobada"] },
+        { nombre: "Optativa 1", editable: true }
       ],
       "5to Año": [
-        { name: "Optativa 2", optativa: true },
-        { name: "Optativa 3", optativa: true },
-        { name: "Tesis de Licenciatura", requires: ["ALL:regular"] }
+        { nombre: "Optativa 2", editable: true },
+        { nombre: "Optativa 3", editable: true },
+        { nombre: "Tesis de Licenciatura", req: ["*"] }
       ]
     };
+
+    const estado = JSON.parse(localStorage.getItem("estadoMalla")) || {};
+    const container = document.getElementById("malla");
+    const stats = document.getElementById("stats");
+    const mensaje = document.getElementById("mensaje");
+
+    const materias = {};
+
+    function guardar() {
+      localStorage.setItem("estadoMalla", JSON.stringify(estado));
+    }
+
+    function mostrarMensaje(texto) {
+      mensaje.textContent = texto;
+      mensaje.classList.add("show");
+      setTimeout(() => mensaje.classList.remove("show"), 2000);
+    }
+
+    function estadoMateria(nombre) {
+      return estado[nombre] || { regular: false, nota: "" };
+    }
+
+    function verificarRequisitos(materia) {
+      const reqs = materia.req || [];
+      if (reqs.includes("*")) {
+        return Object.values(materias).every(m => m.dataset.regular === "true");
+      }
+
+      let faltan = [];
+      for (const r of reqs) {
+        let tipo = "regular";
+        let nombre = r;
+        if (r.includes(":")) {
+          [nombre, tipo] = r.split(":");
+        }
+
+        const m = materias[nombre];
+        if (!m) continue;
+
+        const st = estadoMateria(nombre);
+        if (tipo === "regular" && !st.regular) faltan.push(`${nombre} (regular)`);
+        if (tipo === "aprobada" && !st.nota) faltan.push(`${nombre} (aprobada)`);
+      }
+      return faltan.length ? faltan.join(", ") : null;
+    }
+
+    function actualizar() {
+      let total = 0, aprobadas = 0, sumNotas = 0, countNotas = 0;
+      for (const nombre in materias) {
+        const el = materias[nombre];
+        const st = estadoMateria(nombre);
+
+        el.classList.remove("regular", "aprobada", "bloqueada");
+        el.dataset.regular = st.regular;
+        const nota = st.nota;
+
+        if (nota) {
+          el.classList.add("aprobada");
+          aprobadas++;
+          if (!["Química", "Física", "Análisis Matemático", "Algebra", "ICSE", "IPC"].includes(nombre)) {
+            sumNotas += parseFloat(nota);
+            countNotas++;
+          }
+        } else if (st.regular) {
+          el.classList.add("regular");
+        }
+
+        const materia = el.dataset.info;
+        const bloqueado = verificarRequisitos(JSON.parse(materia));
+        if (bloqueado) {
+          el.classList.add("bloqueada");
+          el.setAttribute("data-tooltip", bloqueado);
+        }
+
+        total++;
+      }
+
+      stats.textContent = `Aprobadas: ${aprobadas}/${total} | Promedio (sin CBC): ${countNotas ? (sumNotas / countNotas).toFixed(2) : "N/A"}`;
+      guardar();
+    }
+
+    function crearMateria(nombre, info) {
+      const div = document.createElement("div");
+      div.className = "materia";
+      div.dataset.info = JSON.stringify(info);
+      div.textContent = nombre;
+      div.dataset.nombre = nombre;
+
+      if (info.editable) {
+        div.classList.add("editable");
+        div.contentEditable = true;
+        div.addEventListener("blur", () => {
+          const nuevo = div.textContent.trim();
+          if (nuevo && nuevo !== nombre) {
+            estado[nuevo] = estado[nombre] || {};
+            delete estado[nombre];
+            materias[nuevo] = div;
+            delete materias[nombre];
+            div.dataset.nombre = nuevo;
+            actualizar();
+          }
+        });
+      }
+
+      const controles = document.createElement("div");
+      controles.className = "controles";
+
+      const check = document.createElement("input");
+      check.type = "checkbox";
+      check.checked = estadoMateria(nombre).regular;
+      check.addEventListener("change", () => {
+        estado[nombre] = estado[nombre] || {};
+        estado[nombre].regular = check.checked;
+        if (check.checked) mostrarMensaje("¡Buen trabajo!");
+        actualizar();
+      });
+
+      const nota = document.createElement("input");
+      nota.type = "text";
+      nota.value = estadoMateria(nombre).nota || "";
+      nota.maxLength = 3;
+      nota.placeholder = "-";
+      nota.addEventListener("input", () => {
+        estado[nombre] = estado[nombre] || {};
+        estado[nombre].nota = nota.value;
+        if (nota.value) mostrarMensaje("¡Felicitaciones!");
+        actualizar();
+      });
+
+      controles.append(check, nota);
+      div.appendChild(controles);
+      return div;
+    }
+
+    for (const ciclo in data) {
+      const col = document.createElement("div");
+      col.className = "column";
+      col.innerHTML = `<h2>${ciclo}</h2>`;
+      for (const m of data[ciclo]) {
+        const nombre = typeof m === "string" ? m : m.nombre;
+        const info = typeof m === "string" ? {} : m;
+        const el = crearMateria(nombre, info);
+        materias[nombre] = el;
+        col.appendChild(el);
+      }
+      container.appendChild(col);
+    }
+
+    actualizar();
   </script>
 </body>
 </html>
