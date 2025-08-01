@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Malla Curricular Física UBA</title>
+  <style>
+    :root { --main-hue: 210; }
+    body { font-family: Arial, sans-serif; background: #f5f7fa; color: #333; margin: 20px; }
+    .stats { margin-bottom: 15px; font-size: 1rem; }
+    .stats span { margin-right: 20px; }
+    .grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
+    .column { background: #fff; padding: 10px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+    .column h3 { margin-top: 0; font-size: 1.1rem; text-align: center; }
+    .subject { background: hsl(var(--main-hue), 50%, 95%); margin: 5px 0; padding: 8px; border-radius: 6px; cursor: pointer; position: relative; }
+    .subject.locked { opacity: 0.5; cursor: default; }
+    .subject .badge { font-size: 0.8rem; padding: 2px 4px; border-radius: 4px; margin-left: 5px; }
+    .subject.regular { border-left: 4px solid hsl(var(--main-hue), 80%, 60%); }
+    .subject.approved { border-left: 4px solid hsl(var(--main-hue), 60%, 40%); }
+    .subject.promoted { border-left: 4px solid hsl(var(--main-hue), 40%, 30%); }
+    .notification { position: fixed; top: 20px; right: 20px; background: hsl(var(--main-hue), 50%, 80%); padding: 10px 15px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.2); animation: fade 3s forwards; }
+    @keyframes fade { 0% { opacity: 0; transform: translateY(-20px);} 10%, 90% { opacity: 1; transform: translateY(0);} 100% { opacity: 0; transform: translateY(-20px);} }
+  </style>
+</head>
+<body>
+  <div class="stats">
+    <span id="count">Aprobadas: 0/0 (0%)</span>
+    <span id="average">Promedio: 0.00</span>
+  </div>
+  <div class="grid" id="grid"></div>
+
+  <script>
+    // Definición de materias y correlatividades
+    const subjects = [
+      // CBC
+      { id: 'quimica', title: 'Química', col: 0, prereq: [] },
+      { id: 'fisica_cbc', title: 'Física', col: 0, prereq: [] },
+      { id: 'analisis', title: 'Análisis Matemático', col: 0, prereq: [] },
+      { id: 'algebra', title: 'Algebra', col: 0, prereq: [] },
+      { id: 'icse', title: 'ICSE', col: 0, prereq: [] },
+      { id: 'ipc', title: 'IPC', col: 0, prereq: [] },
+      // 1er Año
+      { id: 'fisica1', title: 'Física 1', col: 1, prereq: ['quimica','fisica_cbc','analisis','algebra','icse','ipc'] },
+      { id: 'fisica2', title: 'Física 2', col: 1, prereq: [{ id: 'fisica1', status: 'regular' }] },
+      { id: 'mat1', title: 'Matemática 1', col: 1, prereq: ['quimica','fisica_cbc','analisis','algebra','icse','ipc'] },
+      { id: 'mat2', title: 'Matemática 2', col: 1, prereq: ['quimica','fisica_cbc','analisis','algebra','icse','ipc'] },
+      { id: 'mat3', title: 'Matemática 3', col: 1, prereq: [{ id: 'mat1', status: 'regular' }] },
+      { id: 'lab1', title: 'Laboratorio 1', col: 1, prereq: ['quimica','fisica_cbc','analisis','algebra','icse','ipc'] },
+      { id: 'lab2', title: 'Laboratorio 2', col: 1, prereq: ['fisica1','lab1'] },
+      // 2do Año
+      { id: 'num', title: 'Cálculo Numérico', col: 2, prereq: [{ id: 'mat2', status: 'approved' }, { id: 'mat1', status: 'regular' }] },
+      { id: 'fisica3', title: 'Física 3', col: 2, prereq: ['fisica1',{ id: 'mat3', status: 'regular' }, 'mat1'] },
+      { id: 'fisica4', title: 'Física 4', col: 2, prereq: ['fisica1','fisica2','fisica3'] },
+      { id: 'mat4', title: 'Matemática 4', col: 2, prereq: ['mat1','mat2','mat3'] },
+      { id: 'mecanica', title: 'Mecánica Clásica', col: 2, prereq: ['fisica1','mat2','mat3','fisica3'] },
+      { id: 'lab3', title: 'Laboratorio 3', col: 2, prereq: ['lab1','lab2','fisica2','fisica3'] },
+      // 3er Año
+      { id: 'estructura1', title: 'Estructura 1', col: 3, prereq: ['fisica3','fisica4','mat4','mecanica'] },
+      { id: 'lab4', title: 'Laboratorio 4', col: 3, prereq: ['fisica2','fisica3','lab3','fisica4'] },
+      { id: 'lab5', title: 'Laboratorio 5', col: 3, prereq: ['lab4'] },
+      { id: 'teorica1', title: 'Teórica 1', col: 3, prereq: ['fisica3','fisica4','mat4','mecanica'] },
+      { id: 'teorica2', title: 'Teórica 2', col: 3, prereq: ['fisica3','fisica4','mat4','mecanica'] },
+      { id: 'teorica3', title: 'Teórica 3', col: 3, prereq: ['fisica3','fisica4','mecanica'] },
+      // 4to Año
+      { id: 'estructura2', title: 'Estructura 2', col: 4, prereq: ['teorica2','teorica3'] },
+      { id: 'estructura3', title: 'Estructura 3', col: 4, prereq: ['teorica2','teorica3'] },
+      { id: 'estructura4', title: 'Estructura 4', col: 4, prereq: ['teorica2'] },
+      { id: 'lab6', title: 'Laboratorio 6', col: 4, prereq: ['lab5'] },
+      { id: 'lab7', title: 'Laboratorio 7', col: 4, prereq: ['lab6'] },
+      { id: 'opt1', title: 'Optativa 1', col: 4, prereq: [], optativa: true },
+      // 5to Año
+      { id: 'opt2', title: 'Optativa 2', col: 5, prereq: [], optativa: true },
+      { id: 'opt3', title: 'Optativa 3', col: 5, prereq: [], optativa: true },
+      { id: 'tesis', title: 'Tesis de Licenciatura', col: 5, prereq: [] }
+    ];
+
+    const cols = ['CBC','1er Año','2do Año','3er Año','4to Año','5to Año'];
+    const grid = document.getElementById('grid');
+
+    // Crear columnas
+    cols.forEach((label, i) => {
+      const colDiv = document.createElement('div'); colDiv.className='column';
+      const h = document.createElement('h3'); h.textContent = label; colDiv.appendChild(h);
+      grid.appendChild(colDiv);
+    });
+
+    // Cargar estado de localStorage
+    function loadState() {
+      subjects.forEach(s => {
+        const data = JSON.parse(localStorage.getItem(s.id) || 'null');
+        s.status = data?.status || null;
+        s.grade = data?.grade || null;
+        if(s.optativa) s.title = data?.title || s.title;
+      });
+    }
+
+    // Guardar estado individual
+    function saveState(s) {
+      localStorage.setItem(s.id, JSON.stringify({ status: s.status, grade: s.grade, title: s.title }));
+    }
+
+    // Mostrar notificación
+    function notify(msg) {
+      const n = document.createElement('div'); n.className='notification'; n.textContent=msg;
+      document.body.appendChild(n);
+      setTimeout(() => n.remove(), 3000);
+    }
+
+    // Renderizar materias
+    function render() {
+      grid.querySelectorAll('.subject').forEach(el=>el.remove());
+      subjects.forEach(s => {
+        const parent = grid.children[s.col];
+        const div = document.createElement('div'); div.className='subject'; div.id=s.id;
+        div.textContent = s.title;
+        if(s.status==='regular') div.classList.add('regular');
+        if(s.status==='approved') { div.classList.add('approved'); div.textContent += ` (Nota: ${s.grade})`; }
+        if(s.status==='promoted') { div.classList.add('promoted'); div.textContent += ` (Nota: ${s.grade})`; }
+        if(s.optativa) div.contentEditable = true;
+        // Chequear bloqueo
+        const missing = checkPrereq(s);
+        if(missing.length) { div.classList.add('locked'); div.title = 'Falta: ' + missing.join(', '); }
+        // Click handler
+        div.onclick = () => onSubjectClick(s);
+        parent.appendChild(div);
+      });
+      updateStats();
+    }
+
+    // Chequear prereqs y retornar faltantes
+    function checkPrereq(s) {
+      const faltan = [];
+      s.prereq.forEach(p => {
+        let id = p.id || p;
+        let needed = p.status || 'regular';
+        const subj = subjects.find(x=>x.id===id);
+        if(!subj.status || (needed==='approved' && subj.status!=='approved') || (needed==='regular' && subj.status!=='regular')) {
+          faltan.push(subj.title);
+        }
+      });
+      return faltan;
+    }
+
+    // Click en materia
+    function onSubjectClick(s) {
+      const div = document.getElementById(s.id);
+      if(div.classList.contains('locked')) return;
+      if(!s.status) {
+        s.status='regular'; saveState(s); render(); notify('Buen Trabajo');
+      } else if(s.status==='regular') {
+        const promo = confirm('¿Desea promocionar la materia? (OK=Promocionada, Cancel=Aprobada)');
+        s.status=promo?'promoted':'approved';
+        const nota = prompt('Ingrese la nota final (ej. 8):'); s.grade = nota; saveState(s); render(); notify('Felicitaciones!');
+      } else {
+        if(confirm('¿Desea reiniciar el estado de esta materia?')) { s.status=s.grade=null; saveState(s); render(); }
+      }
+    }
+
+    // Actualizar estadísticas
+    function updateStats() {
+      const nonCBC = subjects.filter(s=>s.col>0);
+      const approved = nonCBC.filter(s=>['approved','promoted'].includes(s.status));
+      const countEl = document.getElementById('count');
+      const pct = nonCBC.length? Math.round(approved.length/nonCBC.length*100):0;
+      countEl.textContent = `Aprobadas: ${approved.length}/${nonCBC.length} (${pct}%)`;
+      const grades = approved.map(s=>parseFloat(s.grade)||0).filter(n=>n>0);
+      const avg = grades.length? (grades.reduce((a,b)=>a+b,0)/grades.length).toFixed(2): '0.00';
+      document.getElementById('average').textContent = `Promedio: ${avg}`;
+    }
+
+    // Al editar optativa
+    function setupOptativa() {
+      subjects.filter(s=>s.optativa).forEach(s=>{
+        const div = document.getElementById(s.id);
+        div.addEventListener('input', () => { s.title = div.textContent; saveState(s); });
+      });
+    }
+
+    // Inicializar
+    loadState(); render(); setupOptativa();
+  </script>
+</body>
+</html>
