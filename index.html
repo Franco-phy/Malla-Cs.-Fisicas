@@ -1,3 +1,4 @@
+<!-- ⚠️ Este HTML se adapta a tus pedidos y debe estar acompañado por las imágenes necesarias en la misma carpeta -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -73,7 +74,7 @@ function doConfetti(){
   const ctx = canvas.getContext("2d");
   const pieces = [];
   for(let i=0; i<150; i++){
-    pieces.push({x:Math.random()*canvas.width, y:Math.random()*canvas.height, r:Math.random()*6+4, dx:(Math.random()-0.5)*4, dy:Math.random()*-7-3, color:hsl(${Math.random()*360},70%,60%)});
+    pieces.push({x:Math.random()*canvas.width, y:Math.random()*canvas.height, r:Math.random()*6+4, dx:(Math.random()-0.5)*4, dy:Math.random()*-7-3, color:`hsl(${Math.random()*360},70%,60%)`});
   }
   function draw(){
     ctx.clearRect(0,0,canvas.width,canvas.height);
@@ -95,7 +96,7 @@ function lockCheck(subj, statuses){
     else if(r === "ALL:regular"){ if(!Object.values(statuses).every(s => s.regular)) unmet.push("Todo regularizado"); }
     else {
       let [n,t="regular"] = r.split(":"); const s = statuses[n];
-      if(!s || !s[t]) unmet.push(${n} (${t}));
+      if(!s || !s[t]) unmet.push(`${n} (${t})`);
     }
   });
   return unmet.length ? unmet : false;
@@ -111,7 +112,7 @@ function render(){
   for(let year in data){
     const col = document.createElement("div");
     col.className = "year-column";
-    col.innerHTML = <h2>${year}</h2>;
+    col.innerHTML = `<h2>${year}</h2>`;
     data[year].forEach(subj => {
       total++;
       const div = document.createElement("div");
@@ -152,7 +153,7 @@ function render(){
         }
       };
 
-      div.innerHTML = <strong>${subj.editable ? <input value="${subj.name}" onchange="rename('${subj.name}', this.value)"> : subj.name}</strong>;
+      div.innerHTML = `<strong>${subj.editable ? `<input value="${subj.name}" onchange="rename('${subj.name}', this.value)">` : subj.name}</strong>`;
       div.append(label, nota);
       col.appendChild(div);
     });
@@ -171,8 +172,8 @@ function render(){
     });
   }
 
-  document.getElementById("progBar").style.width = ${(approved / total * 100) || 0}%;
-  document.getElementById("materiasContador").textContent = Materias aprobadas: ${approved} / ${total};
+  document.getElementById("progBar").style.width = `${(approved / total * 100) || 0}%`;
+  document.getElementById("materiasContador").textContent = `Materias aprobadas: ${approved} / ${total}`;
   document.getElementById("promedio").textContent = count ? (sum / count).toFixed(2) : "-";
 }
 
