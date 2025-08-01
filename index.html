@@ -1,128 +1,161 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Malla Curricular - Física UBA</title>
+  <meta charset="UTF-8" />
+  <title>Malla Curricular Física UBA</title>
   <style>
     body {
       font-family: sans-serif;
-      background: #f5f5f5;
-      padding: 2rem;
+      background: #f0f4f8;
       color: #333;
+      margin: 0;
+      padding: 1rem;
     }
     h1 {
       text-align: center;
     }
-    .materia {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: white;
-      padding: 0.5rem 1rem;
-      margin: 0.3rem 0;
-      border-left: 5px solid transparent;
+    .container {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+    .year {
+      background: #ffffff;
+      border-radius: 10px;
+      padding: 1rem;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+    .year h2 {
+      font-size: 1rem;
+      margin-bottom: 1rem;
+      color: #4a90e2;
+    }
+    .subject {
+      background: #e0e6ed;
+      padding: 0.5rem;
+      margin-bottom: 0.5rem;
       border-radius: 5px;
-      transition: background 0.3s, border-left-color 0.3s;
+      position: relative;
     }
-    .materia.cbc {
-      font-style: italic;
-      background: #eef5ff;
+    .subject.blocked {
+      opacity: 0.5;
+      cursor: not-allowed;
     }
-    .materia.regular {
-      border-left-color: orange;
+    .subject.regular {
+      background-color: #d0e9f7;
     }
-    .materia.aprobada {
-      border-left-color: green;
+    .subject.approved {
+      background-color: #b7eac7;
     }
-    .nombre {
-      flex: 1;
-      cursor: pointer;
+    .tooltip {
+      position: absolute;
+      top: 0;
+      left: 100%;
+      margin-left: 10px;
+      background: #444;
+      color: white;
+      padding: 5px;
+      font-size: 0.8rem;
+      border-radius: 4px;
+      display: none;
+      white-space: nowrap;
     }
-    .acciones {
-      display: flex;
-      gap: 0.5rem;
+    .subject.blocked:hover .tooltip {
+      display: block;
     }
-    input[type="number"] {
-      width: 60px;
+    .status-controls {
+      margin-top: 0.3rem;
+    }
+    .status-controls button {
+      font-size: 0.7rem;
+      margin-right: 0.3rem;
+    }
+    .note-input {
+      width: 100%;
+      margin-top: 0.2rem;
+      font-size: 0.8rem;
+    }
+    .message {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #4a90e2;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 5px;
+      display: none;
+      animation: fadeOut 3s forwards;
+    }
+    @keyframes fadeOut {
+      0% { opacity: 1; }
+      80% { opacity: 1; }
+      100% { opacity: 0; display: none; }
+    }
+    .footer {
+      text-align: center;
+      margin-top: 2rem;
+      font-size: 0.9rem;
+    }
+    .opt-input {
+      width: 100%;
+      margin-top: 0.2rem;
     }
   </style>
 </head>
 <body>
   <h1>Malla Curricular - Física UBA</h1>
-  <div id="lista"></div>
+  <div class="container" id="curriculum"></div>
+  <div class="footer">
+    <p id="stats"></p>
+  </div>
+  <div class="message" id="message"></div>
 
   <script>
-    const materias = [
-      { nombre: "Análisis Matemático CBC", cbc: true },
-      { nombre: "Álgebra CBC", cbc: true },
-      { nombre: "Física CBC", cbc: true },
-      { nombre: "Química CBC", cbc: true },
-      { nombre: "Introducción al Pensamiento Científico CBC", cbc: true },
-      { nombre: "Introducción al Conocimiento de la Sociedad y el Estado CBC", cbc: true },
-      { nombre: "Matemática 1" },
-      { nombre: "Matemática 2" },
-      { nombre: "Matemática 3" },
-      { nombre: "Matemática 4" },
-      { nombre: "Física 1" },
-      { nombre: "Física 2" },
-      { nombre: "Física 3" },
-      { nombre: "Física 4" },
-      { nombre: "Química General e Inorgánica" },
-      { nombre: "Química Física" },
-      { nombre: "Mecánica Cuántica" },
-      { nombre: "Termodinámica y Estadística" },
-      { nombre: "Electromagnetismo" },
-      { nombre: "Física Experimental 1" },
-      { nombre: "Física Experimental 2" },
-      { nombre: "Física Experimental 3" },
-      { nombre: "Computación" },
-      { nombre: "Cálculo Numérico" },
-      { nombre: "Laboratorio 1" },
-      { nombre: "Laboratorio 2" },
-      { nombre: "Laboratorio 3" },
-      { nombre: "Mecánica Clásica" },
-      { nombre: "Relatividad y Campos" },
-      { nombre: "Seminario Final" }
-    ];
-
-    const lista = document.getElementById("lista");
-
-    materias.forEach(({ nombre, cbc }) => {
-      const div = document.createElement("div");
-      div.className = "materia" + (cbc ? " cbc" : "");
-
-      const nombreEl = document.createElement("div");
-      nombreEl.className = "nombre";
-      nombreEl.textContent = nombre;
-
-      const acciones = document.createElement("div");
-      acciones.className = "acciones";
-
-      const inputNota = document.createElement("input");
-      inputNota.type = "number";
-      inputNota.placeholder = "Nota";
-      inputNota.min = 4;
-      inputNota.max = 10;
-      inputNota.addEventListener("change", () => {
-        if (inputNota.value >= 4) {
-          div.classList.remove("regular");
-          div.classList.add("aprobada");
-        } else {
-          div.classList.remove("aprobada");
-        }
-      });
-
-      nombreEl.addEventListener("click", () => {
-        if (div.classList.contains("aprobada")) return;
-        div.classList.toggle("regular");
-      });
-
-      acciones.appendChild(inputNota);
-      div.appendChild(nombreEl);
-      div.appendChild(acciones);
-      acciones.appendChild(inputNota);
-      lista.appendChild(div);
-    });
+    const data = {
+      "CBC": [
+        "Química", "Física", "Análisis Matemático", "Álgebra", "ICSE", "IPC"
+      ],
+      "1er Año": [
+        { name: "Física 1", requires: ["CBC"] },
+        { name: "Física 2", requires: ["Física 1:regular"] },
+        { name: "Matemática 1", requires: ["CBC"], promo: true },
+        { name: "Matemática 2", requires: ["CBC"] },
+        { name: "Matemática 3", requires: ["Matemática 1:regular"] },
+        { name: "Laboratorio 1", requires: ["CBC"] },
+        { name: "Laboratorio 2", requires: ["Física 1:regular", "Laboratorio 1:regular"] }
+      ],
+      "2do Año": [
+        { name: "Calculo Numérico", requires: ["Matemática 2:aprobada", "Matemática 1:regular"] },
+        { name: "Física 3", requires: ["Física 1:regular", "Matemática 3:regular", "Matemática 1:aprobada"] },
+        { name: "Física 4", requires: ["Física 1:aprobada", "Física 2:regular", "Física 3:regular"] },
+        { name: "Matemática 4", requires: ["Matemática 1:aprobada", "Matemática 2:aprobada", "Matemática 3:regular"] },
+        { name: "Mecánica Clásica", requires: ["Física 1:aprobada", "Matemática 2:aprobada", "Matemática 3:aprobada", "Física 3:regular"] },
+        { name: "Laboratorio 3", requires: ["Laboratorio 1:aprobada", "Laboratorio 2:aprobada", "Física 2:regular", "Física 3:regular"] }
+      ],
+      "3er Año": [
+        { name: "Estructura 1", requires: ["Física 3:aprobada", "Física 4:regular", "Matemática 4:regular", "Mecánica Clásica:regular"] },
+        { name: "Laboratorio 4", requires: ["Física 2:aprobada", "Física 3:aprobada", "Laboratorio 3:aprobada", "Física 4:regular"] },
+        { name: "Laboratorio 5", requires: ["Laboratorio 4:aprobada"] },
+        { name: "Teórica 1", requires: ["Física 3:aprobada", "Física 4:regular", "Matemática 4:regular", "Mecánica Clásica:regular"] },
+        { name: "Teórica 2", requires: ["Física 3:aprobada", "Física 4:regular", "Matemática 4:regular", "Mecánica Clásica:regular"] },
+        { name: "Teórica 3", requires: ["Física 3:aprobada", "Física 4:regular", "Mecánica Clásica:regular"] }
+      ],
+      "4to Año": [
+        { name: "Estructura 2", requires: ["Teórica 2:regular", "Teórica 3:regular"] },
+        { name: "Estructura 3", requires: ["Teórica 2:regular", "Teórica 3:regular"] },
+        { name: "Estructura 4", requires: ["Teórica 2:regular"] },
+        { name: "Laboratorio 6", requires: ["Laboratorio 5:aprobada"] },
+        { name: "Laboratorio 7", requires: ["Laboratorio 6:aprobada"] },
+        { name: "Optativa 1", optativa: true }
+      ],
+      "5to Año": [
+        { name: "Optativa 2", optativa: true },
+        { name: "Optativa 3", optativa: true },
+        { name: "Tesis de Licenciatura", requires: ["ALL:regular"] }
+      ]
+    };
   </script>
 </body>
 </html>
