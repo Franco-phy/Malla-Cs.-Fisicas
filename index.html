@@ -24,10 +24,7 @@
     input[type="text"] { width:50px; padding:2px; margin-top:4px; font-size:0.8rem; }
     .regular { background:#d0ecf9; }
     .approved { background:#c9f4d2; }
-    @media (max-width:768px){
-      header { flex-direction:column; align-items:stretch; }
-      header .left, header .right { margin:5px 0; justify-content:center; }
-    }
+    @media (max-width:768px){ header { flex-direction:column; align-items:stretch; } header .left, header .right { margin:5px 0; justify-content:center; } }
   </style>
 </head>
 <body>
@@ -48,133 +45,132 @@
     <img src="logo-wide.webp" alt="Física" />
   </div>
 </header>
+
 <div class="controls">
   <button onclick="resetProgress()">Reiniciar Progreso</button>
 </div>
 <div class="container" id="curriculum"></div>
 
 <script>
+  const data = {
+    "CBC":[{name:"Química"},{name:"Física"},{name:"Análisis Matemático"},{name:"Algebra"},{name:"ICSE"},{name:"IPC"}],
+    "1er Año":[{name:"Física 1",req:["CBC"]},{name:"Física 2",req:["Física 1:regular"]},{name:"Matemática 1",req:["CBC"]},{name:"Matemática 2",req:["CBC"]},{name:"Matemática 3",req:["Matemática 1:regular"]},{name:"Laboratorio 1",req:["CBC"]},{name:"Laboratorio 2",req:["Física 1:regular","Laboratorio 1:regular"]}],
+    "2do Año":[{name:"Calculo Numérico",req:["Matemática 2:aprobada","Matemática 1:regular"]},{name:"Física 3",req:["Física 1:regular","Matemática 3:regular","Matemática 1:aprobada"]},{name:"Física 4",req:["Física 1:aprobada","Física 2:regular","Física 3:regular"]},{name:"Matemática 4",req:["Matemática 1:aprobada","Matemática 2:aprobada","Matemática 3:regular"]},{name:"Mecánica Clásica",req:["Física 1:aprobada","Matemática 2:aprobada","Matemática 3:aprobada","Física 3:regular"]},{name:"Laboratorio 3",req:["Laboratorio 1:aprobada","Laboratorio 2:aprobada","Física 2:regular","Física 3:regular"]}],
+    "3er Año":[{name:"Estructura 1",req:["Física 3:aprobada","Física 4:regular","Matemática 4:regular","Mecánica Clásica:regular"]},{name:"Laboratorio 4",req:["Física 2:aprobada","Física 3:aprobada","Laboratorio 3:aprobada","Física 4:regular"]},{name:"Laboratorio 5",req:["Laboratorio 4:aprobada"]},{name:"Teórica 1",req:["Física 3:aprobada","Física 4:regular","Matemática 4:regular","Mecánica Clásica:regular"]},{name:"Teórica 2",req:["Física 3:aprobada","Física 4:regular","Matemática 4:regular","Mecánica Clásica:regular"]},{name:"Teórica 3",req:["Física 3:aprobada","Física 4:regular","Mecánica Clásica:regular"]}],
+    "4to Año":[{name:"Estructura 2",req:["Teórica 2:regular","Teórica 3:regular"]},{name:"Estructura 3",req:["Teórica 2:regular","Teórica 3:regular"]},{name:"Estructura 4",req:["Teórica 2:regular"]},{name:"Laboratorio 6",req:["Laboratorio 5:aprobada"]},{name:"Laboratorio 7",req:["Laboratorio 6:aprobada"]},{name:"Optativa 1",editable:true}],
+    "5to Año":[{name:"Optativa 2",editable:true},{name:"Optativa 3",editable:true},{name:"Tesis de Licenciatura",req:["ALL:regular"]}]
+  };
+
+  let state = JSON.parse(localStorage.getItem("malla_fisica")) || {};
+  function save(){ localStorage.setItem("malla_fisica", JSON.stringify(state)); }
+  function resetProgress(){ if(confirm("¿Reiniciar progreso?")){ localStorage.removeItem("malla_fisica"); location.reload(); } }
+
   function doConfetti(){
-    const canvas=document.createElement('canvas');
-    canvas.style.position='fixed'; canvas.style.top=0; canvas.style.left=0;
-    canvas.width=window.innerWidth; canvas.height=window.innerHeight;
+    const canvas = document.createElement("canvas");
+    canvas.style.position = 'fixed';
+    canvas.style.top = 0;
+    canvas.style.left = 0;
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
     document.body.appendChild(canvas);
-    const ctx=canvas.getContext('2d'), pieces=[];
-    for(let i=0;i<150;i++){ pieces.push({x:Math.random()*canvas.width, y:Math.random()*canvas.height, r:Math.random()*6+4, dx:(Math.random()-0.5)*4, dy:Math.random()*-7-3, color:`hsl(${Math.random()*360},70%,60%)`}); }
+    const ctx = canvas.getContext("2d");
+    const pieces = [];
+    for(let i=0; i<150; i++){
+      pieces.push({x:Math.random()*canvas.width, y:Math.random()*canvas.height, r:Math.random()*6+4, dx:(Math.random()-0.5)*4, dy:Math.random()*-7-3, color:`hsl(${Math.random()*360},70%,60%)`});
+    }
     function draw(){
       ctx.clearRect(0,0,canvas.width,canvas.height);
-      pieces.forEach(p=>{
-        p.x+=p.dx; p.y+=p.dy; p.dy+=0.3;
-        ctx.fillStyle=p.color; ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,2*Math.PI); ctx.fill();
+      pieces.forEach(p => {
+        p.x += p.dx; p.y += p.dy; p.dy += 0.3;
+        ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,2*Math.PI); ctx.fill();
       });
-      pieces.forEach((p,i)=>{ if(p.y>canvas.height){ pieces.splice(i,1); } });
+      pieces.forEach((p,i) => { if(p.y > canvas.height) pieces.splice(i,1); });
       if(pieces.length) requestAnimationFrame(draw); else canvas.remove();
     }
     draw();
   }
 
-  const data={ /* ... misma estructura con materias ... */ };
-
-  let state=JSON.parse(localStorage.getItem("malla_fisica"))||{};
-  function save(){ localStorage.setItem("malla_fisica",JSON.stringify(state)); }
-  function resetProgress(){ if(confirm("¿Reiniciar progreso?")){ localStorage.removeItem("malla_fisica"); location.reload(); } }
-
   function lockCheck(subj, statuses){
     if(!subj.req) return false;
-    let unmet=[];
-    subj.req.forEach(r=>{
-      if(r==="CBC"){
-        const ok=data["CBC"].every(s=>statuses[s.name]?.regular);
-        if(!ok) unmet.push("CBC completo");
-      } else if(r==="ALL:regular"){
-        if(!Object.values(statuses).every(s=>s.regular)) unmet.push("Todo regularizado");
+    let unmet = [];
+    subj.req.forEach(r => {
+      if(r === "CBC"){
+        if(!data["CBC"].every(s => statuses[s.name]?.regular)) unmet.push("CBC completo");
+      } else if(r === "ALL:regular"){
+        if(!Object.values(statuses).every(s => s.regular)) unmet.push("Todo regularizado");
       } else {
-        let [n,t="regular"]=r.split(":");
-        const s=statuses[n];
+        let [n,t="regular"] = r.split(":");
+        const s = statuses[n];
         if(!s || !s[t]) unmet.push(`${n} (${t})`);
       }
     });
-    return unmet.length?unmet:false;
+    return unmet.length ? unmet : false;
   }
 
   function render(){
-    const cont=document.getElementById("curriculum");
-    cont.innerHTML="";
-    let total=0, approved=0, sum=0, count=0;
-    const statuses={};
-    for(let year in data){
-      data[year].forEach(s=>statuses[s.name]=state[s.name]||{});
-    }
+    const container = document.getElementById("curriculum");
+    container.innerHTML = "";
+    let total = 0, approved = 0, sum = 0, count = 0;
+    const statuses = {};
+    for(let year in data){ data[year].forEach(s => statuses[s.name] = state[s.name] || {}); }
 
     for(let year in data){
-      const col=document.createElement("div"); col.className="year-column";
-      col.innerHTML=`<h2>${year}</h2>`;
-      data[year].forEach(subj=>{
+      const col = document.createElement("div");
+      col.className = "year-column";
+      col.innerHTML = `<h2>${year}</h2>`;
+      data[year].forEach(subj => {
         total++;
-        const div=document.createElement("div"); div.className="subject";
-        const s=state[subj.name]||{};
-        const locked=lockCheck(subj,statuses);
-        if(locked){ div.classList.add("locked"); const tt=document.createElement("div"); tt.className="tooltip"; tt.textContent="Requiere: "+locked.join(", "); div.appendChild(tt); }
+        const div = document.createElement("div");
+        div.className = "subject";
+        const s = state[subj.name] || {};
+        const locked = lockCheck(subj, statuses);
+        if(locked){ div.classList.add("locked"); const tt = document.createElement("div"); tt.className = "tooltip"; tt.textContent = "Requiere: " + locked.join(", "); div.appendChild(tt); }
         if(s.regular) div.classList.add("regular");
         if(s.aprobada) div.classList.add("approved");
 
-        const chk=document.createElement("input"); chk.type="checkbox"; chk.checked=s.regular||false; chk.disabled=!!locked;
-        chk.onchange=()=>{
-          s.regular=chk.checked; state[subj.name]=s;
-          save(); render();
-        };
+        const chk = document.createElement("input");
+        chk.type = "checkbox"; chk.checked = s.regular || false; chk.disabled = !!locked;
+        chk.onchange = () => { s.regular = chk.checked; state[subj.name] = s; save(); render(); };
 
-        const label=document.createElement("label"); label.append(chk,document.createTextNode(" Regular"));
+        const label = document.createElement("label");
+        label.append(chk, document.createTextNode(" Regular"));
 
-        const nota=document.createElement("input"); nota.type="text"; nota.placeholder="Nota"; nota.value=s.nota||""; nota.disabled=!!locked;
-        nota.oninput=()=>{
-          let v=parseFloat(nota.value);
-          if(!isNaN(v) && v>=4){
-            const yaEstabaAprobada = s.aprobada;
-            s.aprobada = true;
-            s.nota = v;
+        const nota = document.createElement("input");
+        nota.type = "text"; nota.placeholder = "Nota"; nota.value = s.nota || ""; nota.disabled = !!locked;
+        nota.oninput = () => {
+          let v = parseFloat(nota.value);
+          if(!isNaN(v) && v >= 4){
+            const wasApproved = s.aprobada;
+            s.aprobada = true; s.nota = v;
             if(!s.regular) s.regular = true;
-            state[subj.name] = s;
-            save();
+            state[subj.name] = s; save(); render();
 
-            const aprobadasPrevias = Object.values(state).filter(x => x.aprobada).length;
-            render();
-
+            // confetti si es la última aprobada
             const aprobadasActuales = Object.values(state).filter(x => x.aprobada).length;
-            const totalMaterias = Object.values(data).reduce((acc, year) => acc + year.length, 0);
-
-            if (!yaEstabaAprobada && aprobadasActuales === totalMaterias) {
-              doConfetti();
-            }
+            if (!wasApproved && aprobadasActuales === total) doConfetti();
           } else {
-            s.aprobada = false;
-            s.nota = nota.value;
-            state[subj.name] = s;
-            save();
-            render();
+            s.aprobada = false; s.nota = nota.value;
+            state[subj.name] = s; save(); render();
           }
         };
 
-        div.innerHTML=`<strong>${subj.editable? `<input value="${subj.name}" onchange="rename('${subj.name}', this.value)">`: subj.name}</strong>`;
+        div.innerHTML = `<strong>${subj.editable ? `<input value="${subj.name}" onchange="rename('${subj.name}', this.value)">` : subj.name}</strong>`;
         div.append(label, nota);
         col.appendChild(div);
         if(s.aprobada){
-          approved++;
-          if(year!=="CBC"){ sum+=parseFloat(s.nota)||0; count++; }
+          approved++; if(year !== "CBC"){ sum += parseFloat(s.nota) || 0; count++; }
         }
       });
-      cont.appendChild(col);
+      container.appendChild(col);
     }
 
-    document.getElementById("progBar").style.width=`${(approved/total*100)||0}%`;
-    document.getElementById("promedio").textContent = count ? (sum / count).toFixed(2) : "-";
+    document.getElementById("progBar").style.width = `${(approved / total * 100) || 0}%`;
     document.getElementById("materiasContador").textContent = `Materias aprobadas: ${approved} / ${total}`;
+    document.getElementById("promedio").textContent = count ? (sum / count).toFixed(2) : "-";
   }
 
-  function rename(oldn,newn){ if(newn&&newn.trim()){ state[newn]=state[oldn]; delete state[oldn]; save(); render(); } }
-
+  function rename(oldn,newn){ if(newn && newn.trim()){ state[newn] = state[oldn]; delete state[oldn]; save(); render(); } }
   render();
 </script>
 </body>
 </html>
-
