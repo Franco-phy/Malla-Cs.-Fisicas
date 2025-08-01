@@ -1,137 +1,143 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Malla Curricular Física UBA</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Malla Curricular - Física UBA</title>
   <style>
-    :root { --main-hue: 210; }
-    body { font-family: Arial, sans-serif; background: #f5f7fa; color: #333; margin: 20px; }
-    .stats { margin-bottom: 15px; font-size: 1rem; }
-    .stats span { margin-right: 20px; }
-    .grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
-    .column { background: #fff; padding: 10px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
-    .column h3 { margin-top: 0; font-size: 1.1rem; text-align: center; }
-    .subject { background: hsl(var(--main-hue), 50%, 95%); margin: 5px 0; padding: 8px; border-radius: 6px; cursor: pointer; position: relative; }
-    .subject.locked { opacity: 0.5; cursor: default; }
-    .subject .badge { font-size: 0.8rem; padding: 2px 4px; border-radius: 4px; margin-left: 5px; }
-    .subject.regular { border-left: 4px solid hsl(var(--main-hue), 80%, 60%); }
-    .subject.finalized { border-left: 4px solid hsl(var(--main-hue), 60%, 40%); }
-    .notification { position: fixed; top: 20px; right: 20px; background: hsl(var(--main-hue), 50%, 80%); padding: 10px 15px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.2); animation: fade 3s forwards; }
-    @keyframes fade { 0% { opacity: 0; transform: translateY(-20px);} 10%, 90% { opacity: 1; transform: translateY(0);} 100% { opacity: 0; transform: translateY(-20px);} }
-    .note-input { position: absolute; top: 5px; right: 5px; font-size: 0.8em; background: #fff; border: 1px solid #ccc; border-radius: 4px; padding: 2px 4px; width: 2em; text-align: center; }
+    body {
+      font-family: Arial, sans-serif;
+      background: #f8f9fa;
+      margin: 0;
+      padding: 1rem;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 1rem;
+    }
+    .materia {
+      background: white;
+      border: 2px solid #ccc;
+      padding: 0.8rem;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .materia:hover {
+      transform: scale(1.02);
+    }
+    .materia.regular {
+      border-color: #3498db;
+      background-color: #eaf4fc;
+    }
+    .materia.aprobado {
+      border-color: #2ecc71;
+      background-color: #e8f8f2;
+    }
+    .materia.promocionado {
+      border-color: #f1c40f;
+      background-color: #fff9e6;
+    }
+    .nota {
+      font-weight: bold;
+      font-size: 1.2rem;
+      color: #555;
+    }
+    input[type="number"] {
+      width: 60px;
+      padding: 2px;
+    }
+    .cbc {
+      background-color: #fef2f2;
+      border-color: #e74c3c;
+    }
   </style>
 </head>
 <body>
-  <div class="stats">
-    <span id="count">Aprobadas: 0/0 (0%)</span>
-    <span id="average">Promedio: 0.00</span>
-  </div>
-  <div class="grid" id="grid"></div>
+  <h1>Malla Curricular - Física (UBA)</h1>
+  <div class="grid" id="malla"></div>
 
   <script>
-    const subjects = [...]; // mantener la definición original
-    const cols = ['CBC','1er Año','2do Año','3er Año','4to Año','5to Año'];
-    const grid = document.getElementById('grid');
+    const materias = [
+      { nombre: "Análisis Matemático CBC", cbc: true },
+      { nombre: "Álgebra CBC", cbc: true },
+      { nombre: "Física CBC", cbc: true },
+      { nombre: "Química CBC", cbc: true },
+      { nombre: "Introducción al Pensamiento Científico CBC", cbc: true },
+      { nombre: "Introducción al Conocimiento de la Sociedad y el Estado CBC", cbc: true },
+      { nombre: "Matemática 1" },
+      { nombre: "Matemática 2" },
+      { nombre: "Matemática 3" },
+      { nombre: "Matemática 4" },
+      { nombre: "Física 1" },
+      { nombre: "Física 2" },
+      { nombre: "Física 3" },
+      { nombre: "Física 4" },
+      { nombre: "Química General e Inorgánica" },
+      { nombre: "Química Física" },
+      { nombre: "Mecánica Cuántica" },
+      { nombre: "Termodinámica y Estadística" },
+      { nombre: "Electromagnetismo" },
+      { nombre: "Física Experimental 1" },
+      { nombre: "Física Experimental 2" },
+      { nombre: "Física Experimental 3" },
+      { nombre: "Computación" },
+      { nombre: "Cálculo Numérico" },
+      { nombre: "Laboratorio 1" },
+      { nombre: "Laboratorio 2" },
+      { nombre: "Laboratorio 3" },
+      { nombre: "Mecánica Clásica" },
+      { nombre: "Relatividad y Campos" },
+      { nombre: "Seminario Final" }
+    ];
 
-    function loadState() {
-      subjects.forEach(s => {
-        const data = JSON.parse(localStorage.getItem(s.id) || 'null');
-        s.status = data?.status || null;
-        s.grade = data?.grade || '';
-        if(s.optativa) s.title = data?.title || s.title;
-      });
-    }
+    function crearMalla() {
+      const container = document.getElementById("malla");
+      materias.forEach((mat, i) => {
+        const div = document.createElement("div");
+        div.classList.add("materia");
+        if (mat.cbc) div.classList.add("cbc");
 
-    function saveState(s) {
-      localStorage.setItem(s.id, JSON.stringify({ status: s.status, grade: s.grade, title: s.title }));
-    }
+        const nombre = document.createElement("span");
+        nombre.textContent = mat.nombre;
+        div.appendChild(nombre);
 
-    function notify(msg) {
-      const n = document.createElement('div'); n.className='notification'; n.textContent=msg;
-      document.body.appendChild(n);
-      setTimeout(() => n.remove(), 3000);
-    }
+        div.addEventListener("click", () => {
+          div.classList.toggle("regular");
+        });
 
-    function render() {
-      grid.querySelectorAll('.subject').forEach(el=>el.remove());
-      subjects.forEach(s => {
-        const parent = grid.children[s.col];
-        const div = document.createElement('div'); div.className='subject'; div.id=s.id;
-        div.textContent = s.title;
-        if(s.status==='regular') div.classList.add('regular');
-        if(s.grade) div.classList.add('finalized');
-        if(s.optativa) div.contentEditable = true;
-
-        const missing = checkPrereq(s);
-        if(missing.length) { div.classList.add('locked'); div.title = 'Falta: ' + missing.join(', '); }
-
-        div.onclick = () => onSubjectClick(s);
-
-        // Campo para nota
-        const note = document.createElement('input');
-        note.className = 'note-input';
-        note.type = 'text';
-        note.maxLength = 2;
-        note.placeholder = '📝';
-        note.value = s.grade || '';
-        note.title = 'Ingresar nota';
-        note.oninput = (e) => {
-          s.grade = note.value;
-          saveState(s);
-          render();
-          if (s.grade && !s.status) {
-            s.status = 'regular';
-            notify('Buen Trabajo');
+        const inputNota = document.createElement("input");
+        inputNota.type = "number";
+        inputNota.min = 4;
+        inputNota.max = 10;
+        inputNota.placeholder = "Nota";
+        inputNota.addEventListener("click", (e) => e.stopPropagation());
+        inputNota.addEventListener("change", () => {
+          const nota = parseInt(inputNota.value);
+          div.classList.remove("aprobado", "promocionado");
+          if (!isNaN(nota)) {
+            if (nota >= 4 && nota < 7) {
+              div.classList.add("aprobado");
+            } else if (nota >= 7) {
+              div.classList.add("promocionado");
+            }
           }
-        };
-        div.appendChild(note);
+        });
 
-        parent.appendChild(div);
-      });
-      updateStats();
-    }
-
-    function checkPrereq(s) {
-      const faltan = [];
-      s.prereq.forEach(p => {
-        let id = p.id || p;
-        let needed = p.status || 'regular';
-        const subj = subjects.find(x=>x.id===id);
-        if(!subj.status || (needed==='approved' && !subj.grade) || (needed==='regular' && subj.status!=='regular')) {
-          faltan.push(subj.title);
-        }
-      });
-      return faltan;
-    }
-
-    function onSubjectClick(s) {
-      const div = document.getElementById(s.id);
-      if(div.classList.contains('locked')) return;
-      if(!s.status) {
-        s.status='regular'; saveState(s); render(); notify('Buen Trabajo');
-      }
-    }
-
-    function updateStats() {
-      const nonCBC = subjects.filter(s=>s.col>0);
-      const approved = nonCBC.filter(s=>s.grade);
-      const countEl = document.getElementById('count');
-      const pct = nonCBC.length? Math.round(approved.length/nonCBC.length*100):0;
-      countEl.textContent = `Aprobadas: ${approved.length}/${nonCBC.length} (${pct}%)`;
-      const grades = approved.map(s=>parseFloat(s.grade)||0).filter(n=>n>0);
-      const avg = grades.length? (grades.reduce((a,b)=>a+b,0)/grades.length).toFixed(2): '0.00';
-      document.getElementById('average').textContent = `Promedio: ${avg}`;
-    }
-
-    function setupOptativa() {
-      subjects.filter(s=>s.optativa).forEach(s=>{
-        const div = document.getElementById(s.id);
-        div.addEventListener('input', () => { s.title = div.textContent; saveState(s); });
+        div.appendChild(inputNota);
+        container.appendChild(div);
       });
     }
 
-    loadState(); render(); setupOptativa();
+    crearMalla();
   </script>
 </body>
 </html>
