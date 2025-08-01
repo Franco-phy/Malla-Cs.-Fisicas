@@ -1,334 +1,344 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Malla Curricular - Física UBA</title>
   <style>
     body {
-      font-family: sans-serif;
-      background: #f4f8fc;
-      color: #333;
+      font-family: 'Segoe UI', sans-serif;
       margin: 0;
-      padding: 1em;
+      padding: 0;
+      background: #f2f6f9;
+      color: #333;
     }
-
-    h1 {
-      text-align: center;
-      margin-bottom: 0.2em;
-    }
-
-    .container {
-      display: flex;
-      flex-wrap: nowrap;
-      overflow-x: auto;
-      gap: 1em;
-      justify-content: center;
-    }
-
-    .column {
-      flex: 0 0 auto;
-      min-width: 220px;
-      padding: 0.5em;
-      background: #e6eff9;
-      border-radius: 12px;
-    }
-
-    .column h2 {
-      text-align: center;
-      font-size: 1.1em;
-    }
-
-    .materia {
-      background: #fff;
-      padding: 0.6em;
-      margin: 0.5em 0;
-      border-radius: 10px;
-      position: relative;
-      transition: background 0.3s;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-    }
-
-    .materia.regular { background: #cce7ff; }
-    .materia.aprobada { background: #d2f5d0; }
-
-    .materia.bloqueada {
-      opacity: 0.6;
-      pointer-events: none;
-      position: relative;
-    }
-
-    .materia.bloqueada::after {
-      content: attr(data-tooltip);
-      position: absolute;
-      bottom: 100%;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #444;
-      color: #fff;
-      padding: 0.3em 0.6em;
-      border-radius: 5px;
-      font-size: 0.8em;
-      white-space: pre-wrap;
-      display: none;
-    }
-
-    .materia.bloqueada:hover::after {
-      display: block;
-    }
-
-    .controles {
+    header {
       display: flex;
       align-items: center;
-      gap: 0.4em;
-      margin-top: 0.5em;
+      justify-content: center;
+      gap: 20px;
+      background-color: #e1ecf4;
+      padding: 10px 20px;
     }
-
-    input[type="text"] {
-      width: 2em;
-      padding: 2px;
-      border: 1px solid #aaa;
+    header img {
+      height: 50px;
+      object-fit: contain;
+    }
+    header h1 {
+      font-size: 1.5rem;
+      text-align: center;
+      color: #2b5d84;
+    }
+    .controls {
+      text-align: center;
+      margin: 10px;
+    }
+    .controls button {
+      background-color: #e74c3c;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      font-size: 14px;
       border-radius: 5px;
-      font-size: 0.9em;
-      text-align: center;
+      cursor: pointer;
     }
-
-    .stats {
-      text-align: center;
-      margin-top: 1em;
-      font-size: 1.1em;
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      padding: 10px;
     }
-
-    .mensaje {
-      position: fixed;
-      top: 30%;
-      left: 50%;
-      transform: translateX(-50%);
-      padding: 1em 2em;
+    .year-column {
+      margin: 10px;
+      min-width: 220px;
+      flex: 1;
+    }
+    .year-column h2 {
+      text-align: center;
+      color: #2b5d84;
+    }
+    .subject {
+      background: #ffffff;
+      border: 1px solid #cbd5e0;
+      border-radius: 5px;
+      padding: 8px;
+      margin: 5px 0;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      font-size: 0.9rem;
+    }
+    .subject.locked {
+      opacity: 0.5;
+      pointer-events: none;
+      cursor: not-allowed;
+    }
+    .subject:hover {
+      box-shadow: 0 0 5px #ccc;
+    }
+    .subject label {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .subject input[type="text"] {
+      width: 50px;
+      padding: 2px;
+      margin-top: 4px;
+      font-size: 0.8rem;
+    }
+    .regular {
+      background-color: #d0ecf9;
+    }
+    .approved {
+      background-color: #c9f4d2;
+    }
+    .tooltip {
+      position: absolute;
       background: #333;
       color: white;
-      border-radius: 10px;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.5s ease;
-      font-size: 1.2em;
-      z-index: 1000;
+      padding: 4px 6px;
+      border-radius: 3px;
+      font-size: 0.75rem;
+      top: -5px;
+      right: 5px;
+      z-index: 10;
+      display: none;
     }
-
-    .mensaje.show {
-      opacity: 0.9;
+    .subject.locked:hover .tooltip {
+      display: block;
     }
-
-    .editable {
-      cursor: pointer;
-      font-weight: bold;
-      color: #004080;
+    .stats {
+      text-align: center;
+      margin-top: 15px;
+      font-size: 0.9rem;
+    }
+    @keyframes fadeIn {
+      from {opacity: 0;}
+      to {opacity: 1;}
+    }
+    .message {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #2ecc71;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 5px;
+      animation: fadeIn 0.6s ease-in-out;
+      z-index: 9999;
+    }
+    @media (max-width: 768px) {
+      .year-column {
+        min-width: 100%;
+      }
+      header h1 {
+        font-size: 1.2rem;
+      }
     }
   </style>
 </head>
 <body>
-  <h1>Malla Curricular - Física UBA</h1>
-  <div class="container" id="malla"></div>
+  <header>
+    <img src="UBA_logo_University_of_Buenos_Aires.webp" alt="UBA" />
+    <h1>Malla Curricular - Física UBA</h1>
+    <img src="logo-wide.webp" alt="Física" />
+  </header>
+  <div class="controls">
+    <button onclick="resetProgress()">Reiniciar Progreso</button>
+  </div>
+  <div class="container" id="curriculum"></div>
   <div class="stats" id="stats"></div>
-  <div class="mensaje" id="mensaje"></div>
 
   <script>
     const data = {
       "CBC": [
-        "Química",
-        "Física",
-        "Análisis Matemático",
-        "Algebra",
-        "ICSE",
-        "IPC"
+        { name: "Química" },
+        { name: "Física" },
+        { name: "Análisis Matemático" },
+        { name: "Algebra" },
+        { name: "ICSE" },
+        { name: "IPC" }
       ],
       "1er Año": [
-        { nombre: "Física 1", req: ["CBC"] },
-        { nombre: "Física 2", req: ["Física 1:regular"] },
-        { nombre: "Matemática 1", req: ["CBC"], promocionable: true },
-        { nombre: "Matemática 2", req: ["CBC"] },
-        { nombre: "Matemática 3", req: ["Matemática 1:regular"] },
-        { nombre: "Laboratorio 1", req: ["CBC"] },
-        { nombre: "Laboratorio 2", req: ["Física 1:regular", "Laboratorio 1:regular"] }
+        { name: "Física 1", req: ["CBC"] },
+        { name: "Física 2", req: ["Física 1:regular"] },
+        { name: "Matemática 1", req: ["CBC"] },
+        { name: "Matemática 2", req: ["CBC"] },
+        { name: "Matemática 3", req: ["Matemática 1:regular"] },
+        { name: "Laboratorio 1", req: ["CBC"] },
+        { name: "Laboratorio 2", req: ["Física 1:regular", "Laboratorio 1:regular"] }
       ],
       "2do Año": [
-        { nombre: "Calculo Numérico", req: ["Matemática 2:aprobada", "Matemática 1:regular"] },
-        { nombre: "Física 3", req: ["Física 1:regular", "Matemática 3:regular", "Matemática 1:aprobada"] },
-        { nombre: "Física 4", req: ["Física 1:aprobada", "Física 2:regular", "Física 3:regular"] },
-        { nombre: "Matemática 4", req: ["Matemática 1:aprobada", "Matemática 2:aprobada", "Matemática 3:regular"] },
-        { nombre: "Mecánica Clásica", req: ["Física 1:aprobada", "Matemática 2:aprobada", "Matemática 3:aprobada", "Física 3:regular"] },
-        { nombre: "Laboratorio 3", req: ["Laboratorio 1:aprobada", "Laboratorio 2:aprobada", "Física 2:regular", "Física 3:regular"] }
+        { name: "Calculo Numérico", req: ["Matemática 2:aprobada", "Matemática 1:regular"] },
+        { name: "Física 3", req: ["Física 1:regular", "Matemática 3:regular", "Matemática 1:aprobada"] },
+        { name: "Física 4", req: ["Física 1:aprobada", "Física 2:regular", "Física 3:regular"] },
+        { name: "Matemática 4", req: ["Matemática 1:aprobada", "Matemática 2:aprobada", "Matemática 3:regular"] },
+        { name: "Mecánica Clásica", req: ["Física 1:aprobada", "Matemática 2:aprobada", "Matemática 3:aprobada", "Física 3:regular"] },
+        { name: "Laboratorio 3", req: ["Laboratorio 1:aprobada", "Laboratorio 2:aprobada", "Física 2:regular", "Física 3:regular"] }
       ],
       "3er Año": [
-        { nombre: "Estructura 1", req: ["Física 3:aprobada", "Física 4:regular", "Matemática 4:regular", "Mecánica Clásica:regular"] },
-        { nombre: "Laboratorio 4", req: ["Física 2:aprobada", "Física 3:aprobada", "Laboratorio 3:aprobada", "Física 4:regular"] },
-        { nombre: "Laboratorio 5", req: ["Laboratorio 4:aprobada"] },
-        { nombre: "Teórica 1", req: ["Física 3:aprobada", "Física 4:regular", "Matemática 4:regular", "Mecánica Clásica:regular"] },
-        { nombre: "Teórica 2", req: ["Física 3:aprobada", "Física 4:regular", "Matemática 4:regular", "Mecánica Clásica:regular"] },
-        { nombre: "Teórica 3", req: ["Física 3:aprobada", "Física 4:regular", "Mecánica Clásica:regular"] }
+        { name: "Estructura 1", req: ["Física 3:aprobada", "Física 4:regular", "Matemática 4:regular", "Mecánica Clásica:regular"] },
+        { name: "Laboratorio 4", req: ["Física 2:aprobada", "Física 3:aprobada", "Laboratorio 3:aprobada", "Física 4:regular"] },
+        { name: "Laboratorio 5", req: ["Laboratorio 4:aprobada"] },
+        { name: "Teórica 1", req: ["Física 3:aprobada", "Física 4:regular", "Matemática 4:regular", "Mecánica Clásica:regular"] },
+        { name: "Teórica 2", req: ["Física 3:aprobada", "Física 4:regular", "Matemática 4:regular", "Mecánica Clásica:regular"] },
+        { name: "Teórica 3", req: ["Física 3:aprobada", "Física 4:regular", "Mecánica Clásica:regular"] }
       ],
       "4to Año": [
-        { nombre: "Estructura 2", req: ["Teórica 2:regular", "Teórica 3:regular"] },
-        { nombre: "Estructura 3", req: ["Teórica 2:regular", "Teórica 3:regular"] },
-        { nombre: "Estructura 4", req: ["Teórica 2:regular"] },
-        { nombre: "Laboratorio 6", req: ["Laboratorio 5:aprobada"] },
-        { nombre: "Laboratorio 7", req: ["Laboratorio 6:aprobada"] },
-        { nombre: "Optativa 1", editable: true }
+        { name: "Estructura 2", req: ["Teórica 2:regular", "Teórica 3:regular"] },
+        { name: "Estructura 3", req: ["Teórica 2:regular", "Teórica 3:regular"] },
+        { name: "Estructura 4", req: ["Teórica 2:regular"] },
+        { name: "Laboratorio 6", req: ["Laboratorio 5:aprobada"] },
+        { name: "Laboratorio 7", req: ["Laboratorio 6:aprobada"] },
+        { name: "Optativa 1", editable: true }
       ],
       "5to Año": [
-        { nombre: "Optativa 2", editable: true },
-        { nombre: "Optativa 3", editable: true },
-        { nombre: "Tesis de Licenciatura", req: ["*"] }
+        { name: "Optativa 2", editable: true },
+        { name: "Optativa 3", editable: true },
+        { name: "Tesis de Licenciatura", req: ["ALL:regular"] }
       ]
     };
 
-    const estado = JSON.parse(localStorage.getItem("estadoMalla")) || {};
-    const container = document.getElementById("malla");
-    const stats = document.getElementById("stats");
-    const mensaje = document.getElementById("mensaje");
+    let state = JSON.parse(localStorage.getItem("malla_fisica")) || {};
 
-    const materias = {};
-
-    function guardar() {
-      localStorage.setItem("estadoMalla", JSON.stringify(estado));
+    function save() {
+      localStorage.setItem("malla_fisica", JSON.stringify(state));
     }
 
-    function mostrarMensaje(texto) {
-      mensaje.textContent = texto;
-      mensaje.classList.add("show");
-      setTimeout(() => mensaje.classList.remove("show"), 2000);
-    }
-
-    function estadoMateria(nombre) {
-      return estado[nombre] || { regular: false, nota: "" };
-    }
-
-    function verificarRequisitos(materia) {
-      const reqs = materia.req || [];
-      if (reqs.includes("*")) {
-        return Object.values(materias).every(m => m.dataset.regular === "true");
+    function resetProgress() {
+      if (confirm("¿Seguro que deseas reiniciar todo el progreso?")) {
+        localStorage.removeItem("malla_fisica");
+        location.reload();
       }
-
-      let faltan = [];
-      for (const r of reqs) {
-        let tipo = "regular";
-        let nombre = r;
-        if (r.includes(":")) {
-          [nombre, tipo] = r.split(":");
-        }
-
-        const m = materias[nombre];
-        if (!m) continue;
-
-        const st = estadoMateria(nombre);
-        if (tipo === "regular" && !st.regular) faltan.push(`${nombre} (regular)`);
-        if (tipo === "aprobada" && !st.nota) faltan.push(`${nombre} (aprobada)`);
-      }
-      return faltan.length ? faltan.join(", ") : null;
     }
 
-    function actualizar() {
-      let total = 0, aprobadas = 0, sumNotas = 0, countNotas = 0;
-      for (const nombre in materias) {
-        const el = materias[nombre];
-        const st = estadoMateria(nombre);
+    function showMessage(msg, color = "#2ecc71") {
+      const el = document.createElement("div");
+      el.className = "message";
+      el.style.background = color;
+      el.textContent = msg;
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 3000);
+    }
 
-        el.classList.remove("regular", "aprobada", "bloqueada");
-        el.dataset.regular = st.regular;
-        const nota = st.nota;
+    function render() {
+      const container = document.getElementById("curriculum");
+      container.innerHTML = "";
+      let total = 0, approved = 0, sum = 0, count = 0;
+      const allStatuses = {};
 
-        if (nota) {
-          el.classList.add("aprobada");
-          aprobadas++;
-          if (!["Química", "Física", "Análisis Matemático", "Algebra", "ICSE", "IPC"].includes(nombre)) {
-            sumNotas += parseFloat(nota);
-            countNotas++;
+      for (let year in data) {
+        const column = document.createElement("div");
+        column.className = "year-column";
+        column.innerHTML = `<h2>${year}</h2>`;
+
+        for (let subj of data[year]) {
+          total++;
+          const id = subj.name;
+          let subjState = state[id] || {};
+          allStatuses[id] = subjState;
+
+          const div = document.createElement("div");
+          div.className = "subject";
+          div.title = id;
+
+          const locked = isLocked(subj, allStatuses);
+          if (locked) {
+            div.classList.add("locked");
+            const tooltip = document.createElement("div");
+            tooltip.className = "tooltip";
+            tooltip.textContent = "Requiere: " + locked.join(", ");
+            div.appendChild(tooltip);
           }
-        } else if (st.regular) {
-          el.classList.add("regular");
-        }
 
-        const materia = el.dataset.info;
-        const bloqueado = verificarRequisitos(JSON.parse(materia));
-        if (bloqueado) {
-          el.classList.add("bloqueada");
-          el.setAttribute("data-tooltip", bloqueado);
-        }
+          if (subjState.regular) div.classList.add("regular");
+          if (subjState.aprobada) div.classList.add("approved");
 
-        total++;
-      }
+          const label = document.createElement("label");
+          const chk = document.createElement("input");
+          chk.type = "checkbox";
+          chk.checked = subjState.regular || false;
+          chk.disabled = locked;
+          chk.onchange = () => {
+            subjState.regular = chk.checked;
+            state[id] = subjState;
+            if (chk.checked) showMessage("¡Buen Trabajo!");
+            save(); render();
+          };
+          label.appendChild(chk);
+          label.append(" Regular");
 
-      stats.textContent = `Aprobadas: ${aprobadas}/${total} | Promedio (sin CBC): ${countNotas ? (sumNotas / countNotas).toFixed(2) : "N/A"}`;
-      guardar();
-    }
+          div.innerHTML = `<strong>${subj.editable ? `<input value="${id}" onchange="renameSubject('${id}', this.value)">` : id}</strong>`;
+          div.appendChild(label);
 
-    function crearMateria(nombre, info) {
-      const div = document.createElement("div");
-      div.className = "materia";
-      div.dataset.info = JSON.stringify(info);
-      div.textContent = nombre;
-      div.dataset.nombre = nombre;
+          const nota = document.createElement("input");
+          nota.type = "text";
+          nota.placeholder = "Nota";
+          nota.value = subjState.nota || "";
+          nota.disabled = locked;
+          nota.oninput = () => {
+            const val = parseFloat(nota.value);
+            if (!isNaN(val) && val >= 4) {
+              subjState.aprobada = true;
+              subjState.nota = val;
+              if (!subjState.regular) subjState.regular = true;
+              showMessage("¡Felicitaciones!", "#27ae60");
+            } else {
+              subjState.aprobada = false;
+            }
+            state[id] = subjState;
+            save(); render();
+          };
+          div.appendChild(nota);
 
-      if (info.editable) {
-        div.classList.add("editable");
-        div.contentEditable = true;
-        div.addEventListener("blur", () => {
-          const nuevo = div.textContent.trim();
-          if (nuevo && nuevo !== nombre) {
-            estado[nuevo] = estado[nombre] || {};
-            delete estado[nombre];
-            materias[nuevo] = div;
-            delete materias[nombre];
-            div.dataset.nombre = nuevo;
-            actualizar();
+          column.appendChild(div);
+
+          if (subjState.aprobada) {
+            approved++;
+            if (!["CBC"].includes(year)) {
+              sum += parseFloat(subjState.nota);
+              count++;
+            }
           }
-        });
+        }
+
+        container.appendChild(column);
       }
 
-      const controles = document.createElement("div");
-      controles.className = "controles";
-
-      const check = document.createElement("input");
-      check.type = "checkbox";
-      check.checked = estadoMateria(nombre).regular;
-      check.addEventListener("change", () => {
-        estado[nombre] = estado[nombre] || {};
-        estado[nombre].regular = check.checked;
-        if (check.checked) mostrarMensaje("¡Buen trabajo!");
-        actualizar();
-      });
-
-      const nota = document.createElement("input");
-      nota.type = "text";
-      nota.value = estadoMateria(nombre).nota || "";
-      nota.maxLength = 3;
-      nota.placeholder = "-";
-      nota.addEventListener("input", () => {
-        estado[nombre] = estado[nombre] || {};
-        estado[nombre].nota = nota.value;
-        if (nota.value) mostrarMensaje("¡Felicitaciones!");
-        actualizar();
-      });
-
-      controles.append(check, nota);
-      div.appendChild(controles);
-      return div;
+      document.getElementById("stats").innerHTML =
+        `Materias aprobadas: ${approved} / ${total} <br> Promedio (sin CBC): ${count ? (sum / count).toFixed(2) : "-"}`;
     }
 
-    for (const ciclo in data) {
-      const col = document.createElement("div");
-      col.className = "column";
-      col.innerHTML = `<h2>${ciclo}</h2>`;
-      for (const m of data[ciclo]) {
-        const nombre = typeof m === "string" ? m : m.nombre;
-        const info = typeof m === "string" ? {} : m;
-        const el = crearMateria(nombre, info);
-        materias[nombre] = el;
-        col.appendChild(el);
+    function renameSubject(oldName, newName) {
+      if (!newName || newName.trim() === "") return;
+      state[newName] = state[oldName];
+      delete state[oldName];
+      save();
+      render();
+    }
+
+    function isLocked(subj, allStatuses) {
+      if (!subj.req) return false;
+      const unmet = [];
+      for (let req of subj.req) {
+        if (req === "CBC") {
+          const cbcOk = Object.keys(allStatuses).filter(k => k in data["CBC"]).every(k => allStatuses[k]?.regular);
+          if (!cbcOk) unmet.push("CBC completo");
+        } else if (req === "ALL:regular") {
+          const allRegular = Object.keys(allStatuses).every(k => allStatuses[k]?.regular);
+          if (!allRegular) unmet.push("Todo regularizado");
+        } else {
+          const [rname, type = "regular"] = req.split(":");
+          const stat = allStatuses[rname];
+          if (!stat || !stat[type]) unmet.push(`${rname} (${type})`);
+        }
       }
-      container.appendChild(col);
+      return unmet.length ? unmet : false;
     }
 
-    actualizar();
+    render();
   </script>
 </body>
 </html>
