@@ -1,170 +1,220 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Malla Curricular - Cs. Físicas</title>
+  <title>Malla Curricular Física - UBA</title>
   <style>
-    body {
-      font-family: sans-serif;
-      background: #f4f4f4;
-      margin: 0;
-      padding: 20px;
-      color: #333;
+    :root {
+      --aprobada: #6FCF97;
+      --regular: #F2C94C;
+      --pendiente: #E0E0E0;
+      --bloqueada: #BDBDBD;
+      --fondo: #f7f9fa;
+      --texto: #333;
     }
-    h1 {
+    body.dark {
+      --fondo: #1e1e1e;
+      --texto: #eee;
+      --aprobada: #27ae60;
+      --regular: #f39c12;
+      --pendiente: #555;
+      --bloqueada: #333;
+    }
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      background: var(--fondo);
+      color: var(--texto);
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #2980b9;
+      color: white;
+      padding: 10px 20px;
+    }
+    .malla {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: center;
+      padding: 20px;
+    }
+    .anio {
+      min-width: 200px;
+    }
+    .anio h2 {
       text-align: center;
     }
     .materia {
       background: white;
-      padding: 10px;
+      padding: 8px;
       margin: 5px;
-      border-radius: 8px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      border-radius: 5px;
+      cursor: pointer;
+      text-align: center;
+      transition: background 0.3s;
+    }
+    .materia.bloqueada {
+      background: var(--bloqueada);
+      cursor: not-allowed;
+    }
+    .materia.pendiente {
+      background: var(--pendiente);
+    }
+    .materia.regular {
+      background: var(--regular);
+    }
+    .materia.aprobada {
+      background: var(--aprobada);
+    }
+    .notas-input {
+      margin-top: 5px;
+    }
+    .controles {
+      margin: 10px 20px;
       display: flex;
+      gap: 10px;
       align-items: center;
-      justify-content: space-between;
     }
-    .materia label {
-      flex-grow: 1;
-      margin-left: 10px;
-    }
-    .materia input[type="number"] {
-      width: 50px;
-      margin-left: 10px;
-    }
-    .anio {
-      margin-bottom: 30px;
-    }
-    .optativas textarea {
-      width: 100%;
-      height: 80px;
-    }
-    .resumen {
-      margin-top: 30px;
-      padding: 15px;
-      background: #e0e0e0;
-      border-radius: 8px;
-    }
-    .toast {
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #333;
-      color: white;
-      padding: 10px 20px;
-      border-radius: 8px;
-      opacity: 0;
-      transition: opacity 0.5s ease-in-out;
-    }
-    .toast.show {
-      opacity: 1;
+    .stats {
+      font-weight: bold;
     }
   </style>
 </head>
 <body>
-  <h1>Malla Curricular - Cs. Físicas</h1>
-  <div id="contenedor"></div>
-  <div class="optativas">
-    <h2>Materias Optativas</h2>
-    <textarea id="optativas"></textarea>
+  <header>
+    <h1>Malla Física UBA</h1>
+    <div>
+      <button onclick="toggleDarkMode()">🌓</button>
+      <button onclick="resetMalla()">Reiniciar</button>
+    </div>
+  </header>
+
+  <div class="controles">
+    <input type="text" id="buscador" placeholder="Buscar materia...">
+    <button onclick="buscarMateria()">Buscar</button>
+    <span class="stats" id="estadisticas"></span>
   </div>
-  <div class="resumen" id="resumen"></div>
-  <div class="toast" id="toast"></div>
+
+  <main class="malla" id="malla"></main>
+
   <script>
-    const materias = {
-      "CBC": ["Física", "Análisis Matemático", "Álgebra", "ICSE", "IPC"],
-      "1er año": ["Física I", "Matemática I", "Matemática II"],
-      "2do año": ["Física II", "Matemática III", "Laboratorio I"],
-      "3er año": ["Física III", "Laboratorio II", "Matemática IV", "Computación"],
-      "4to año": ["Física IV", "Laboratorio III", "Física Estadística", "Mecánica Cuántica I"],
-      "5to año": ["Física V", "Laboratorio IV", "Electrodinámica Cuántica", "Seminario"]
-    };
+    const materias = [
+      { nombre: "Análisis Matemático I", anio: 1 },
+      { nombre: "Álgebra I", anio: 1 },
+      { nombre: "Física I", anio: 1 },
+      { nombre: "Análisis Matemático II", anio: 2 },
+      { nombre: "Física II", anio: 2 },
+      { nombre: "Álgebra II", anio: 2 },
+      { nombre: "Física III", anio: 3 },
+      { nombre: "Matemática III", anio: 3 },
+      { nombre: "Laboratorio I", anio: 3 },
+      { nombre: "Matemática IV", anio: 4 },
+      { nombre: "Física IV", anio: 4 },
+      { nombre: "Laboratorio II", anio: 4 },
+      { nombre: "Laboratorio III", anio: 5 },
+      { nombre: "Materia Optativa I", anio: 5, optativa: true },
+      { nombre: "Materia Optativa II", anio: 5, optativa: true },
+    ];
 
-    const contenedor = document.getElementById("contenedor");
+    let estado = JSON.parse(localStorage.getItem("estadoMalla")) || {};
+    let modoOscuro = localStorage.getItem("modoOscuro") === "true";
 
-    for (const [anio, lista] of Object.entries(materias)) {
-      const div = document.createElement("div");
-      div.className = "anio";
-      div.innerHTML = `<h2>${anio}</h2>`;
+    function render() {
+      document.body.classList.toggle("dark", modoOscuro);
+      const cont = document.getElementById("malla");
+      cont.innerHTML = "";
 
-      for (const nombre of lista) {
-        const estado = JSON.parse(localStorage.getItem(nombre) || '{}');
-        const mat = document.createElement("div");
-        mat.className = "materia";
+      for (let anio = 1; anio <= 5; anio++) {
+        const col = document.createElement("div");
+        col.className = "anio";
+        col.innerHTML = `<h2>${anio}° Año</h2>`;
+        materias.filter(m => m.anio === anio).forEach(mat => {
+          const div = document.createElement("div");
+          div.className = `materia ${estado[mat.nombre]?.estado || "pendiente"}`;
+          div.innerHTML = `<div>${mat.nombre}</div>`;
+          if (mat.optativa) div.contentEditable = true;
+          div.onclick = () => cambiarEstado(mat.nombre);
 
-        const check = document.createElement("input");
-        check.type = "checkbox";
-        check.checked = estado.regular || false;
-
-        const label = document.createElement("label");
-        label.innerText = nombre;
-        label.title = "Click para marcar como regular";
-
-        const nota = document.createElement("input");
-        nota.type = "number";
-        nota.placeholder = "Nota";
-        nota.min = 1;
-        nota.max = 10;
-        nota.value = estado.nota || "";
-
-        nota.addEventListener("blur", () => {
-          const val = parseFloat(nota.value);
-          if (nota.value && (isNaN(val) || val < 1 || val > 10)) {
-            showToast("Ingrese una nota válida entre 1 y 10");
-            nota.value = "";
-            return;
+          if (estado[mat.nombre]?.estado === "aprobada") {
+            div.innerHTML += `<div class='notas-input'>Nota: ${estado[mat.nombre].nota}</div>`;
           }
-          localStorage.setItem(nombre, JSON.stringify({ regular: check.checked, nota: val || "" }));
-          actualizarResumen();
-          if (val >= 4) showToast("¡Felicidades por aprobar " + nombre + "!");
-        });
 
-        check.addEventListener("change", () => {
-          localStorage.setItem(nombre, JSON.stringify({ regular: check.checked, nota: nota.value || "" }));
-          actualizarResumen();
+          col.appendChild(div);
         });
-
-        mat.appendChild(check);
-        mat.appendChild(label);
-        mat.appendChild(nota);
-        div.appendChild(mat);
+        cont.appendChild(col);
       }
 
-      contenedor.appendChild(div);
+      actualizarEstadisticas();
     }
 
-    const resumen = document.getElementById("resumen");
-    const optativas = document.getElementById("optativas");
-    optativas.value = localStorage.getItem("optativas") || "";
-    optativas.addEventListener("input", () => localStorage.setItem("optativas", optativas.value));
+    function cambiarEstado(nombre) {
+      if (!estado[nombre]) estado[nombre] = { estado: "pendiente" };
+      const actual = estado[nombre].estado;
+      if (actual === "pendiente") {
+        estado[nombre].estado = "regular";
+        alert("Bien hecho, materia regularizada.");
+      } else if (actual === "regular") {
+        const nota = prompt("Ingrese nota (1-10):");
+        const n = parseInt(nota);
+        if (!isNaN(n) && n >= 1 && n <= 10) {
+          estado[nombre].estado = "aprobada";
+          estado[nombre].nota = n;
+          alert("¡Felicitaciones, materia aprobada!");
+        } else {
+          alert("Nota inválida.");
+        }
+      } else {
+        estado[nombre] = { estado: "pendiente" };
+      }
+      guardar();
+    }
 
-    function actualizarResumen() {
-      let total = 0, aprobadas = 0, suma = 0, cont = 0;
+    function guardar() {
+      localStorage.setItem("estadoMalla", JSON.stringify(estado));
+      render();
+    }
 
-      for (const [anio, lista] of Object.entries(materias)) {
-        for (const nombre of lista) {
-          total++;
-          const s = JSON.parse(localStorage.getItem(nombre) || '{}');
-          if (s?.nota >= 4) {
-            aprobadas++;
-            suma += parseFloat(s.nota);
-            cont++;
-          }
+    function toggleDarkMode() {
+      modoOscuro = !modoOscuro;
+      localStorage.setItem("modoOscuro", modoOscuro);
+      render();
+    }
+
+    function resetMalla() {
+      if (confirm("¿Seguro que querés reiniciar todo?")) {
+        if (confirm("¿Estás realmente seguro?")) {
+          localStorage.removeItem("estadoMalla");
+          estado = {};
+          render();
         }
       }
-      resumen.innerHTML = `Aprobadas: ${aprobadas} / ${total}<br>Promedio (sin CBC): ${cont > 0 ? (suma / cont).toFixed(2) : "-"}`;
     }
 
-    function showToast(msg) {
-      const toast = document.getElementById("toast");
-      toast.textContent = msg;
-      toast.className = "toast show";
-      setTimeout(() => toast.className = "toast", 3000);
+    function buscarMateria() {
+      const texto = document.getElementById("buscador").value.toLowerCase();
+      const divs = document.querySelectorAll(".materia");
+      divs.forEach(div => {
+        const nombre = div.innerText.toLowerCase();
+        div.style.border = nombre.includes(texto) ? "2px solid red" : "none";
+      });
     }
 
-    actualizarResumen();
+    function actualizarEstadisticas() {
+      let aprob = 0, reg = 0, pend = 0;
+      materias.forEach(m => {
+        const est = estado[m.nombre]?.estado || "pendiente";
+        if (est === "aprobada") aprob++;
+        else if (est === "regular") reg++;
+        else pend++;
+      });
+      document.getElementById("estadisticas").textContent = `Aprobadas: ${aprob} | Regulares: ${reg} | Pendientes: ${pend}`;
+    }
+
+    render();
   </script>
 </body>
 </html>
